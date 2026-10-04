@@ -1,0 +1,12 @@
+supabase-token.txt
+*.token
+.env
+img/estampa.pdf
+img/_*
+tools/_*
+tools/t.html
+tools/chrome-profile/
+tools/pdf.min.js
+tools/pdf.worker.min.js
+supabase/.temp/
+tools/render.html

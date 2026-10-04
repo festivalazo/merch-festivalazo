@@ -1,0 +1,892 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Merch Festivalazo 2026</title>
+<meta name="description" content="Stock y ventas de remeras y ropa del Festivalazo 2026">
+<meta name="theme-color" content="#000000">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="img/icon-192.png">
+<link rel="apple-touch-icon" href="img/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Merch Festi">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+/* Paleta de la estampa: fondo negro, línea blanca, centro de margarita mostaza, hongo malva */
+:root{
+  color-scheme: dark;
+  --bg:#050505; --bar:#000; --card:#151413; --ink:#f6f2ec; --muted:#a39d95; --line:#2c2926;
+  --brand:#e9a23b; --brand-ink:#130d04; --mauve:#a9566b; --mauve-soft:#c77a8e;
+  --ok:#9ccf8f; --ok-bg:#1c2a19; --transf:#9cc0ea; --transf-bg:#17222f;
+  --gift:#e597ab; --gift-bg:#36171f; --warn:#e9a23b; --warn-bg:#33240c;
+  --zero:#3d3934; --shadow:0 1px 0 rgba(255,255,255,.04) inset,0 4px 14px rgba(0,0,0,.5);
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--ink);font-family:Inter,system-ui,sans-serif;font-size:15px;-webkit-tap-highlight-color:transparent}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer}
+.hidden{display:none!important}
+h1,h2,h3{margin:0}
+.display{font-family:"Bebas Neue",Impact,sans-serif;letter-spacing:.03em;font-weight:400}
+
+/* Login */
+#login{min-height:100dvh;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding:24px 16px calc(32px + env(safe-area-inset-bottom));
+  background:linear-gradient(to bottom,rgba(0,0,0,.05) 0%,rgba(0,0,0,.25) 45%,#000 78%),url(img/hero.jpg) center top/min(100%,640px) no-repeat,#000}
+.login-card{width:100%;max-width:360px;color:var(--ink);padding:8px 4px}
+.login-card h1{font-size:52px;line-height:.88;color:#fff;text-shadow:0 2px 18px #000}
+.login-card h1 span{color:var(--brand)}
+.login-card p{color:var(--muted);margin:8px 0 20px}
+.login-card input{width:100%;padding:14px;border:1.5px solid #3a3632;border-radius:12px;background:#111;color:#fff;font-size:17px}
+.login-card .btn{width:100%;margin-top:12px}
+.err{color:#ff7b7b;font-size:14px;min-height:20px;margin-top:8px}
+
+/* Layout */
+header{position:sticky;top:0;z-index:20;background:var(--bar);color:#fff;border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
+header .logo{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid #ffffff30;flex:0 0 38px}
+header h1{font-size:clamp(19px,6vw,26px);line-height:1;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+header h1 span{color:var(--brand)}
+.chip-user{background:#ffffff14;border:1px solid #ffffff22 !important;border:0;color:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600;white-space:nowrap;max-width:34vw;overflow:hidden;text-overflow:ellipsis}
+.icon-btn{background:transparent;border:0;color:inherit;padding:6px;border-radius:10px;display:inline-flex}
+main{max-width:860px;margin:0 auto;padding:12px 16px calc(96px + env(safe-area-inset-bottom))}
+nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav.tabs button{flex:1;border:0;background:transparent;padding:10px 4px 9px;display:flex;flex-direction:column;align-items:center;gap:3px;font-size:12px;font-weight:600;color:var(--muted)}
+nav.tabs button.on{color:var(--brand)}
+nav.tabs svg{width:24px;height:24px}
+.offline{background:var(--warn-bg);color:var(--warn);text-align:center;font-size:13px;font-weight:600;padding:6px}
+
+/* Common */
+.btn{border:0;border-radius:12px;padding:13px 16px;font-weight:700;background:var(--brand);color:var(--brand-ink);font-size:16px}
+.btn.sec{background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+.btn.danger{background:transparent;color:#d33;border:1.5px solid #d3333355}
+.btn:disabled{opacity:.45}
+.card{background:var(--card);border-radius:16px;box-shadow:var(--shadow)}
+.input,select.input,textarea.input{width:100%;padding:12px;border:1.5px solid var(--line);border-radius:12px;background:var(--card);font-size:16px}
+label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin:12px 0 5px}
+.row{display:flex;gap:10px;align-items:center}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.money{font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* Stock */
+.totals{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.totals div{background:var(--card);border-radius:14px;padding:10px;text-align:center;box-shadow:var(--shadow)}
+.totals b{display:block;font-size:24px;font-family:"Bebas Neue",sans-serif;font-weight:400;letter-spacing:.03em}
+.totals span{font-size:12px;color:var(--muted);font-weight:600}
+.search{position:relative;margin-bottom:10px}
+.search input{padding-left:38px}
+.search svg{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted)}
+.chips{display:flex;gap:6px;overflow-x:auto;padding-bottom:4px;margin-bottom:10px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{border:1.5px solid var(--line);background:var(--card);border-radius:999px;padding:7px 13px;font-size:14px;font-weight:600;white-space:nowrap;color:var(--ink)}
+.chip.on{background:var(--brand);color:var(--brand-ink);border-color:var(--brand)}
+.cat-title{font-size:22px;margin:16px 0 8px;display:flex;align-items:baseline;gap:8px}
+.cat-title small{font-family:Inter;font-size:13px;color:var(--muted);letter-spacing:0}
+.grid{display:grid;grid-template-columns:1fr;gap:10px}
+@media (min-width:640px){.grid{grid-template-columns:1fr 1fr}}
+.prod{display:flex;gap:12px;padding:12px}
+.prod.agotado{opacity:.6}
+.thumb{width:76px;height:76px;flex:0 0 76px;border-radius:12px;background:var(--bg);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--muted);border:0;padding:0;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.prod-body{flex:1;min-width:0}
+.prod-head{display:flex;gap:6px;align-items:flex-start}
+.prod-head h3{font-size:16px;font-weight:700;flex:1;min-width:0;overflow-wrap:anywhere}
+.prod-sub{font-size:13px;color:var(--muted);margin:2px 0 8px}
+.prod-sub b{color:var(--ink)}
+.sizes{display:flex;flex-wrap:wrap;gap:6px}
+.size{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:5px 8px;min-width:50px;text-align:center;line-height:1.15}
+.size b{display:block;font-size:14px}
+.size span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
+.size.low{border-color:var(--warn);background:var(--warn-bg)}
+.size.zero{opacity:.45;text-decoration:line-through}
+.size:not(.zero):active{transform:scale(.96)}
+.empty{text-align:center;color:var(--muted);padding:40px 10px}
+.fab{position:fixed;right:16px;bottom:calc(76px + env(safe-area-inset-bottom));z-index:21;width:58px;height:58px;border-radius:50%;border:0;background:var(--brand);color:#fff;box-shadow:0 6px 18px #e9a23b55;display:flex;align-items:center;justify-content:center}
+
+/* Ventas */
+.sum-pay{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.sum-pay div{border-radius:14px;padding:10px;text-align:center}
+.sum-pay b{display:block;font-size:17px}
+.sum-pay span{font-size:12px;font-weight:600}
+.p-efectivo{background:var(--ok-bg);color:var(--ok)}
+.p-transferencia{background:var(--transf-bg);color:var(--transf)}
+.p-regalo{background:var(--gift-bg);color:var(--gift)}
+.sale{display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}
+.sale:last-child{border-bottom:0}
+.sale .when{font-size:12px;color:var(--muted);width:42px;flex:0 0 42px;font-variant-numeric:tabular-nums}
+.sale .what{flex:1;min-width:0}
+.sale .what b{display:block;font-size:14px;overflow-wrap:anywhere}
+.sale .what span{font-size:12px;color:var(--muted)}
+.badge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 8px;text-transform:uppercase;letter-spacing:.03em}
+.sale.anulada{opacity:.45}
+.sale.anulada b{text-decoration:line-through}
+.day{font-size:13px;font-weight:700;color:var(--muted);margin:14px 4px 6px;text-transform:capitalize}
+
+/* Resumen */
+.kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+.kpi{padding:12px}
+.kpi span{font-size:12px;font-weight:600;color:var(--muted)}
+.kpi b{display:block;font-size:22px;margin-top:2px}
+.kpi.big{grid-column:1/-1;background:linear-gradient(120deg,#2a1219,#151413 70%);border:1px solid #a9566b55;color:#fff}
+.kpi.big span{color:var(--mauve-soft)}
+.kpi.big b{color:var(--brand)}
+.kpi.big b{font-size:34px;font-family:"Bebas Neue",sans-serif;font-weight:400;letter-spacing:.03em}
+.sec-title{font-size:20px;margin:18px 0 8px}
+.table-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
+th:first-child,td:first-child{text-align:left;white-space:normal}
+th{font-size:12px;color:var(--muted);font-weight:600}
+td.q0{color:#d33;font-weight:700}
+
+/* Sheet */
+.backdrop{position:fixed;inset:0;background:rgba(10,5,25,.55);z-index:50;display:flex;align-items:flex-end;justify-content:center}
+.sheet{background:var(--card);width:100%;max-width:560px;max-height:92dvh;overflow-y:auto;border-radius:20px 20px 0 0;padding:8px 16px calc(18px + env(safe-area-inset-bottom));animation:up .18s ease-out}
+@media (min-width:640px){.backdrop{align-items:center}.sheet{border-radius:20px}}
+@keyframes up{from{transform:translateY(30px);opacity:.5}}
+.grab{width:40px;height:4px;border-radius:4px;background:var(--line);margin:4px auto 12px}
+.sheet h2{font-size:28px;line-height:1}
+.sell-top{display:flex;gap:12px;align-items:center;margin-bottom:12px}
+.sell-top .thumb{width:64px;height:64px;flex-basis:64px}
+.stepper{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
+.stepper button{border:0;background:var(--bg);width:48px;height:46px;font-size:22px;font-weight:700}
+.stepper input{width:56px;text-align:center;border:0;background:transparent;font-size:18px;font-weight:700}
+.pay-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.pay{border:2px solid transparent;border-radius:14px;padding:12px 4px;font-weight:700;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px}
+.pay svg{width:26px;height:26px}
+.pay.on{border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
+.total-line{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 10px}
+.total-line b{font-size:28px;font-family:"Bebas Neue",sans-serif;font-weight:400;letter-spacing:.03em}
+.talle-row{display:grid;grid-template-columns:1fr 92px 64px 36px;gap:8px;align-items:center;margin-bottom:6px}
+.talle-row .input{padding:9px;text-align:center}
+.talle-row .tname{font-weight:700}
+.preset{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.photo-pick{display:flex;gap:12px;align-items:center}
+.photo-pick .thumb{width:84px;height:84px;flex-basis:84px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom));z-index:60;background:#1f1d1b;color:#fff;border:1px solid var(--line);border-radius:12px;padding:12px 14px;display:flex;gap:14px;align-items:center;box-shadow:0 8px 24px rgba(0,0,0,.3);max-width:calc(100% - 32px);font-weight:600;font-size:14px}
+.toast button{background:transparent;border:0;color:var(--brand);font-weight:800;text-transform:uppercase;font-size:13px}
+.viewer{position:fixed;inset:0;z-index:70;background:rgba(0,0,0,.92);display:flex;align-items:center;justify-content:center;padding:16px}
+.viewer img{max-width:100%;max-height:100%;border-radius:12px}
+.spinner{width:28px;height:28px;border:3px solid var(--line);border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;margin:40px auto}
+@keyframes spin{to{transform:rotate(360deg)}}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<section id="login" class="hidden">
+  <form class="login-card" id="loginForm">
+    <h1 class="display">Merch<br><span>Festivalazo</span> 2026</h1>
+    <p>Stock y ventas de ropa del evento.</p>
+    <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
+    <button class="btn" type="submit" id="loginBtn">Entrar</button>
+    <div class="err" id="loginErr"></div>
+  </form>
+</section>
+
+<!-- APP -->
+<div id="app" class="hidden">
+  <header>
+    <img class="logo" src="img/logo.jpg" alt="">
+    <h1 class="display">Merch <span>Festivalazo</span> 26</h1>
+    <button class="chip-user" id="userChip" title="Cambiar quién vende"></button>
+    <button class="icon-btn" id="menuBtn" aria-label="Menú">
+      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+    </button>
+  </header>
+  <div class="offline hidden" id="offline">Sin conexión — los cambios no se guardan hasta que vuelva</div>
+  <main id="view"><div class="spinner"></div></main>
+  <button class="fab" id="fab" aria-label="Agregar prenda">
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+  </button>
+  <nav class="tabs">
+    <button data-tab="stock" class="on">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c0 2-1.8 3-4 3s-4-1-4-3Z"/></svg>Stock</button>
+    <button data-tab="ventas">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Vendido</button>
+    <button data-tab="resumen">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Resumen</button>
+  </nav>
+</div>
+
+<div id="modal"></div>
+
+<script>
+const SUPABASE_URL = 'https://qfnaodezkfxplhnfngos.supabase.co';
+const SUPABASE_KEY = 'sb_publishable_u-Q85xWgUAEYHpM387P8PA_3fDZJyQY';
+const EMAIL = 'festivalz01@gmail.com';
+const CATEGORIAS = ['Remeras', 'Buzos', 'Tops', 'Gorras', 'Shorts'];
+const TALLES_ROPA = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
+const ORDEN_TALLES = ['XXS','XS','S','M','L','XL','XXL','XXXL','ÚNICO'];
+const FORMAS = {
+  efectivo: { txt: 'Efectivo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>' },
+  transferencia: { txt: 'Transferencia', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>' },
+  regalo: { txt: 'Regalo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12M12 9S10 4 7.5 4 5 7 7 8.5 12 9 12 9Zm0 0s2-5 4.5-5S19 7 17 8.5 12 9 12 9Z"/></svg>' },
+};
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const peso = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
+const money = n => peso.format(Number(n) || 0);
+const ls = {
+  get(k, d) { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch {} },
+};
+
+let prendas = [], ventas = [];
+let tab = ['stock', 'ventas', 'resumen'].includes(location.hash.slice(1)) ? location.hash.slice(1) : 'stock';
+const filtros = { q: '', cat: 'Todas', soloStock: false, forma: 'todas', vendedor: 'todos' };
+let vendedor = ls.get('mf_vendedor', '');
+
+// ---------- Datos ----------
+async function cargar() {
+  const [p, v] = await Promise.all([
+    sb.from('prendas').select('*').order('categoria').order('modelo').order('color'),
+    sb.from('ventas').select('*').order('creado', { ascending: false }).limit(10000),
+  ]);
+  if (p.error || v.error) { toast('Error al cargar: ' + (p.error || v.error).message); return; }
+  prendas = p.data; ventas = v.data;
+  render();
+}
+let recargaTimer;
+const recargarPronto = () => { clearTimeout(recargaTimer); recargaTimer = setTimeout(cargar, 250); };
+
+function vendidoPorPrenda() {
+  const m = {};
+  for (const v of ventas) {
+    if (v.anulada) continue;
+    const x = m[v.prenda_id] ||= { vendido: 0, regalado: 0, cobrado: 0 };
+    x.vendido += v.cantidad;
+    if (v.forma_pago === 'regalo') x.regalado += v.cantidad; else x.cobrado += Number(v.total);
+  }
+  return m;
+}
+function conStock() {
+  const m = vendidoPorPrenda();
+  return prendas.map(p => {
+    const x = m[p.id] || { vendido: 0, regalado: 0, cobrado: 0 };
+    return { ...p, ...x, queda: p.cargado - x.vendido };
+  });
+}
+const grupoKey = p => [p.categoria, p.modelo, p.color].join('|');
+function ordenTalle(a, b) {
+  const ia = ORDEN_TALLES.indexOf(String(a).toUpperCase()), ib = ORDEN_TALLES.indexOf(String(b).toUpperCase());
+  if (ia >= 0 || ib >= 0) return (ia < 0 ? 99 : ia) - (ib < 0 ? 99 : ib);
+  return String(a).localeCompare(String(b), 'es', { numeric: true });
+}
+function grupos(lista) {
+  const m = new Map();
+  for (const p of lista) {
+    const k = grupoKey(p);
+    if (!m.has(k)) m.set(k, { key: k, categoria: p.categoria, modelo: p.modelo, color: p.color, items: [] });
+    m.get(k).items.push(p);
+  }
+  for (const g of m.values()) {
+    g.items.sort((a, b) => ordenTalle(a.talle, b.talle));
+    g.foto = g.items.find(i => i.foto_url)?.foto_url;
+    const precios = [...new Set(g.items.map(i => Number(i.precio)))];
+    g.precio = precios.length === 1 ? money(precios[0]) : money(Math.min(...precios)) + '+';
+    g.cargado = g.items.reduce((s, i) => s + i.cargado, 0);
+    g.vendido = g.items.reduce((s, i) => s + i.vendido, 0);
+    g.queda = g.items.reduce((s, i) => s + i.queda, 0);
+    g.activo = g.items.some(i => i.activo);
+  }
+  return [...m.values()];
+}
+const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p.categoria)])];
+
+// ---------- Render ----------
+function render() {
+  document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
+  $('#fab').classList.toggle('hidden', tab !== 'stock');
+  $('#userChip').textContent = vendedor ? '👤 ' + vendedor : '¿Quién vende?';
+  ({ stock: renderStock, ventas: renderVentas, resumen: renderResumen })[tab]();
+}
+
+function renderStock() {
+  const todos = conStock().filter(p => p.activo);
+  const tot = todos.reduce((a, p) => (a.c += p.cargado, a.v += p.vendido, a.q += p.queda, a), { c: 0, v: 0, q: 0 });
+  const q = filtros.q.trim().toLowerCase();
+  let lista = todos.filter(p =>
+    (filtros.cat === 'Todas' || p.categoria === filtros.cat) &&
+    (!q || [p.modelo, p.color, p.categoria, p.talle].join(' ').toLowerCase().includes(q)));
+  let gs = grupos(lista);
+  if (filtros.soloStock) gs = gs.filter(g => g.queda > 0);
+  const cats = categoriasUsadas();
+
+  let html = `
+    <div class="totals">
+      <div><b>${tot.c}</b><span>Cargado</span></div>
+      <div><b>${tot.v}</b><span>Vendido</span></div>
+      <div><b style="color:var(--brand)">${tot.q}</b><span>Quedan</span></div>
+    </div>
+    <div class="search">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+      <input class="input" id="q" placeholder="Buscar modelo, color, talle…" value="${esc(filtros.q)}">
+    </div>
+    <div class="chips">
+      ${['Todas', ...cats].map(c => `<button class="chip ${filtros.cat === c ? 'on' : ''}" data-cat="${esc(c)}">${esc(c)}</button>`).join('')}
+      <button class="chip ${filtros.soloStock ? 'on' : ''}" id="soloStock">Solo con stock</button>
+    </div>`;
+
+  if (!prendas.length) {
+    html += `<div class="empty"><p><b>Todavía no hay prendas cargadas.</b></p><p>Tocá <b>+</b> para agregar la primera.</p></div>`;
+  } else if (!gs.length) {
+    html += `<div class="empty">No hay prendas que coincidan.</div>`;
+  }
+  for (const cat of cats) {
+    const delCat = gs.filter(g => g.categoria === cat);
+    if (!delCat.length) continue;
+    const quedan = delCat.reduce((s, g) => s + g.queda, 0);
+    html += `<h2 class="cat-title display">${esc(cat)} <small>${quedan} quedan</small></h2><div class="grid">`;
+    for (const g of delCat) {
+      html += `
+      <article class="card prod ${g.queda <= 0 ? 'agotado' : ''}">
+        <button class="thumb" data-foto="${esc(g.foto || '')}" data-key="${esc(g.key)}">${g.foto ? `<img src="${esc(g.foto)}" alt="" loading="lazy">` : iconCam()}</button>
+        <div class="prod-body">
+          <div class="prod-head">
+            <h3>${esc(g.modelo)}</h3>
+            <button class="icon-btn" data-edit="${esc(g.key)}" aria-label="Editar" style="color:var(--muted);margin:-6px -6px 0 0">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4Z"/></svg>
+            </button>
+          </div>
+          <div class="prod-sub">${g.color ? esc(g.color) + ' · ' : ''}<b class="money">${g.precio}</b> · quedan <b>${g.queda}</b>/${g.cargado}</div>
+          <div class="sizes">
+            ${g.items.map(i => `<button class="size ${i.queda <= 0 ? 'zero' : i.queda <= 2 ? 'low' : ''}" data-sell="${i.id}" ${i.queda <= 0 ? 'disabled' : ''}>
+              <b>${esc(i.talle)}</b><span>${i.queda}/${i.cargado}</span></button>`).join('')}
+          </div>
+        </div>
+      </article>`;
+    }
+    html += `</div>`;
+  }
+  $('#view').innerHTML = html;
+
+  const qi = $('#q');
+  qi.oninput = () => { filtros.q = qi.value; const pos = qi.selectionStart; renderStock(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
+  document.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { filtros.cat = b.dataset.cat; renderStock(); });
+  $('#soloStock').onclick = () => { filtros.soloStock = !filtros.soloStock; renderStock(); };
+  document.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => abrirVenta(Number(b.dataset.sell)));
+  document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => abrirPrenda(b.dataset.edit));
+  document.querySelectorAll('.thumb[data-key]').forEach(b => b.onclick = () => b.dataset.foto ? verFoto(b.dataset.foto) : abrirPrenda(b.dataset.key));
+}
+
+function renderVentas() {
+  const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
+  const vendedores = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
+  const lista = ventas.filter(v =>
+    (filtros.forma === 'todas' || v.forma_pago === filtros.forma) &&
+    (filtros.vendedor === 'todos' || v.vendedor === filtros.vendedor));
+  const activas = lista.filter(v => !v.anulada);
+  const sum = f => activas.filter(v => v.forma_pago === f);
+  const ef = sum('efectivo').reduce((s, v) => s + Number(v.total), 0);
+  const tr = sum('transferencia').reduce((s, v) => s + Number(v.total), 0);
+  const rg = sum('regalo').reduce((s, v) => s + v.cantidad, 0);
+
+  let html = `
+    <div class="sum-pay">
+      <div class="p-efectivo"><b class="money">${money(ef)}</b><span>Efectivo</span></div>
+      <div class="p-transferencia"><b class="money">${money(tr)}</b><span>Transferencia</span></div>
+      <div class="p-regalo"><b>${rg}</b><span>Regaladas</span></div>
+    </div>
+    <div class="chips">
+      ${[['todas', 'Todas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['regalo', 'Regalos']].map(([k, t]) =>
+        `<button class="chip ${filtros.forma === k ? 'on' : ''}" data-forma="${k}">${t}</button>`).join('')}
+    </div>
+    ${vendedores.length > 1 ? `<div class="chips">${['todos', ...vendedores].map(n =>
+      `<button class="chip ${filtros.vendedor === n ? 'on' : ''}" data-vend="${esc(n)}">${n === 'todos' ? 'Todos' : esc(n)}</button>`).join('')}</div>` : ''}`;
+
+  if (!lista.length) html += `<div class="empty">Todavía no hay ventas${filtros.forma !== 'todas' || filtros.vendedor !== 'todos' ? ' con este filtro' : ''}.</div>`;
+  let dia = '';
+  let abierto = false;
+  for (const v of lista) {
+    const d = new Date(v.creado);
+    const dk = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
+    if (dk !== dia) { if (abierto) html += `</div>`; html += `<div class="day">${dk}</div><div class="card">`; dia = dk; abierto = true; }
+    const p = porId[v.prenda_id] || {};
+    html += `
+      <div class="sale ${v.anulada ? 'anulada' : ''}" data-venta="${v.id}">
+        <div class="when">${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
+        <div class="what">
+          <b>${v.cantidad > 1 ? v.cantidad + '× ' : ''}${esc(p.modelo || '¿?')} · ${esc(p.talle || '')}</b>
+          <span>${[p.color, v.vendedor && '👤 ' + v.vendedor, v.nota && '“' + v.nota + '”', v.anulada && 'ANULADA'].filter(Boolean).map(esc).join(' · ')}</span>
+        </div>
+        <div style="text-align:right">
+          <div class="money" style="font-weight:700">${v.forma_pago === 'regalo' ? '—' : money(v.total)}</div>
+          <span class="badge p-${v.forma_pago}">${FORMAS[v.forma_pago].txt}</span>
+        </div>
+      </div>`;
+  }
+  if (abierto) html += `</div>`;
+  $('#view').innerHTML = html;
+  document.querySelectorAll('[data-forma]').forEach(b => b.onclick = () => { filtros.forma = b.dataset.forma; renderVentas(); });
+  document.querySelectorAll('[data-vend]').forEach(b => b.onclick = () => { filtros.vendedor = b.dataset.vend; renderVentas(); });
+  document.querySelectorAll('[data-venta]').forEach(el => el.onclick = () => abrirDetalleVenta(Number(el.dataset.venta)));
+}
+
+function resumenDatos() {
+  const st = conStock();
+  const porId = Object.fromEntries(st.map(p => [p.id, p]));
+  const act = ventas.filter(v => !v.anulada);
+  const ef = act.filter(v => v.forma_pago === 'efectivo').reduce((s, v) => s + Number(v.total), 0);
+  const tr = act.filter(v => v.forma_pago === 'transferencia').reduce((s, v) => s + Number(v.total), 0);
+  const regalos = act.filter(v => v.forma_pago === 'regalo');
+  const rgU = regalos.reduce((s, v) => s + v.cantidad, 0);
+  const rgValor = regalos.reduce((s, v) => s + v.cantidad * Number(porId[v.prenda_id]?.precio || 0), 0);
+  const vendidasU = act.filter(v => v.forma_pago !== 'regalo').reduce((s, v) => s + v.cantidad, 0);
+  const activas = st.filter(p => p.activo);
+  const quedaU = activas.reduce((s, p) => s + p.queda, 0);
+  const quedaValor = activas.reduce((s, p) => s + p.queda * Number(p.precio), 0);
+  const porVend = {};
+  for (const v of act) {
+    const k = v.vendedor || '(sin nombre)';
+    const x = porVend[k] ||= { unidades: 0, efectivo: 0, transferencia: 0, regalos: 0 };
+    if (v.forma_pago === 'regalo') x.regalos += v.cantidad; else { x.unidades += v.cantidad; x[v.forma_pago] += Number(v.total); }
+  }
+  const porCat = {};
+  for (const p of st) {
+    const x = porCat[p.categoria] ||= { cargado: 0, vendido: 0, regalado: 0, queda: 0, cobrado: 0 };
+    x.cargado += p.cargado; x.vendido += p.vendido - p.regalado; x.regalado += p.regalado; x.queda += p.queda; x.cobrado += p.cobrado;
+  }
+  return { st, ef, tr, rgU, rgValor, vendidasU, quedaU, quedaValor, porVend, porCat };
+}
+
+function renderResumen() {
+  const r = resumenDatos();
+  const filasVend = Object.entries(r.porVend).sort((a, b) => (b[1].efectivo + b[1].transferencia) - (a[1].efectivo + a[1].transferencia));
+  const filasCat = Object.entries(r.porCat);
+  const detalle = [...r.st].sort((a, b) => a.categoria.localeCompare(b.categoria) || a.modelo.localeCompare(b.modelo) || a.color.localeCompare(b.color) || ordenTalle(a.talle, b.talle));
+  $('#view').innerHTML = `
+    <div class="kpis">
+      <div class="card kpi big"><span>Total cobrado</span><b class="money">${money(r.ef + r.tr)}</b></div>
+      <div class="card kpi"><span>Efectivo</span><b class="money" style="color:var(--ok)">${money(r.ef)}</b></div>
+      <div class="card kpi"><span>Transferencia</span><b class="money" style="color:var(--transf)">${money(r.tr)}</b></div>
+      <div class="card kpi"><span>Prendas vendidas</span><b>${r.vendidasU}</b></div>
+      <div class="card kpi"><span>Regaladas</span><b style="color:var(--gift)">${r.rgU}</b><span>${money(r.rgValor)} a precio de lista</span></div>
+      <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span>${money(r.quedaValor)} a precio de lista</span></div>
+      <div class="card kpi"><span>Ventas registradas</span><b>${ventas.filter(v => !v.anulada).length}</b></div>
+    </div>
+    <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
+
+    <h2 class="sec-title display">Por persona</h2>
+    <div class="card table-wrap"><table>
+      <tr><th>Quién</th><th>Prendas</th><th>Efectivo</th><th>Transf.</th><th>Regalos</th></tr>
+      ${filasVend.map(([n, x]) => `<tr><td>${esc(n)}</td><td>${x.unidades}</td><td class="money">${money(x.efectivo)}</td><td class="money">${money(x.transferencia)}</td><td>${x.regalos}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sin ventas todavía</td></tr>'}
+    </table></div>
+
+    <h2 class="sec-title display">Por categoría</h2>
+    <div class="card table-wrap"><table>
+      <tr><th>Categoría</th><th>Cargado</th><th>Vendido</th><th>Regalo</th><th>Queda</th><th>Cobrado</th></tr>
+      ${filasCat.map(([c, x]) => `<tr><td>${esc(c)}</td><td>${x.cargado}</td><td>${x.vendido}</td><td>${x.regalado}</td><td class="${x.queda <= 0 ? 'q0' : ''}">${x.queda}</td><td class="money">${money(x.cobrado)}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sin prendas</td></tr>'}
+    </table></div>
+
+    <h2 class="sec-title display">Detalle por prenda</h2>
+    <div class="card table-wrap"><table>
+      <tr><th>Prenda</th><th>Talle</th><th>Cargado</th><th>Vendido</th><th>Regalo</th><th>Queda</th></tr>
+      ${detalle.map(p => `<tr><td>${esc(p.modelo)}${p.color ? ' · ' + esc(p.color) : ''}${p.activo ? '' : ' <span class="muted">(oculta)</span>'}</td><td>${esc(p.talle)}</td><td>${p.cargado}</td><td>${p.vendido - p.regalado}</td><td>${p.regalado}</td><td class="${p.queda <= 0 ? 'q0' : ''}">${p.queda}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sin prendas</td></tr>'}
+    </table></div>`;
+  $('#excel').onclick = descargarExcel;
+}
+
+// ---------- Venta ----------
+function abrirVenta(id) {
+  const p = conStock().find(x => x.id === id);
+  if (!p || p.queda <= 0) return;
+  if (!vendedor) { pedirVendedor(() => abrirVenta(id)); return; }
+  let cant = 1, forma = null;
+  modal(`
+    <div class="sell-top">
+      <div class="thumb">${p.foto_url ? `<img src="${esc(p.foto_url)}" alt="">` : iconCam()}</div>
+      <div>
+        <h2 class="display">${esc(p.modelo)}</h2>
+        <div class="muted small">${esc(p.categoria)}${p.color ? ' · ' + esc(p.color) : ''} · Talle <b style="color:var(--ink)">${esc(p.talle)}</b></div>
+        <div class="small"><b class="money">${money(p.precio)}</b> · quedan ${p.queda}</div>
+      </div>
+    </div>
+    <div class="row" style="justify-content:space-between">
+      <span style="font-weight:600">Cantidad</span>
+      <div class="stepper"><button id="menos">−</button><input id="cant" inputmode="numeric" value="1"><button id="mas">+</button></div>
+    </div>
+    <div class="pay-btns">
+      ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.txt}</button>`).join('')}
+    </div>
+    <div id="notaBox" class="hidden">
+      <label class="lbl">¿A quién o por qué? (opcional)</label>
+      <input class="input" id="nota" maxlength="120" placeholder="Ej: banda, staff, sorteo…">
+    </div>
+    <div class="total-line"><span class="muted" id="totLbl">Total</span><b class="money" id="tot"></b></div>
+    <button class="btn" id="confirmar" style="width:100%" disabled>Elegí cómo paga</button>
+    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cancelar</button>
+  `);
+  const upd = () => {
+    cant = Math.max(1, Math.min(p.queda, parseInt($('#cant').value) || 1));
+    $('#cant').value = cant;
+    $('#tot').textContent = forma === 'regalo' ? money(0) : money(p.precio * cant);
+    $('#totLbl').textContent = forma === 'regalo' ? `Regalo (${money(p.precio * cant)} de lista)` : 'Total';
+    document.querySelectorAll('[data-pay]').forEach(b => b.classList.toggle('on', b.dataset.pay === forma));
+    $('#notaBox').classList.toggle('hidden', forma !== 'regalo');
+    const btn = $('#confirmar');
+    btn.disabled = !forma;
+    btn.textContent = !forma ? 'Elegí cómo paga' : forma === 'regalo' ? `Registrar regalo (${cant})` : `Confirmar venta · ${money(p.precio * cant)}`;
+  };
+  $('#menos').onclick = () => { $('#cant').value = cant - 1; upd(); };
+  $('#mas').onclick = () => { $('#cant').value = cant + 1; upd(); };
+  $('#cant').onchange = upd;
+  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => { forma = b.dataset.pay; upd(); });
+  $('#confirmar').onclick = async () => {
+    const btn = $('#confirmar'); btn.disabled = true; btn.textContent = 'Guardando…';
+    const { data, error } = await sb.rpc('vender', {
+      p_prenda: p.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor,
+      p_nota: forma === 'regalo' ? $('#nota').value : null,
+    });
+    if (error) { toast(error.message.replace(/^.*?: /, '')); upd(); return; }
+    cerrarModal();
+    toast(`${forma === 'regalo' ? 'Regalo registrado' : 'Venta registrada'} ✓ ${p.modelo} ${p.talle}`, 'Deshacer', () => anular(data, true));
+    cargar();
+  };
+  upd();
+}
+
+async function anular(id, valor) {
+  const v = ventas.find(x => x.id === id);
+  if (!valor && v) {
+    const p = conStock().find(x => x.id === v.prenda_id);
+    if (p && p.queda < v.cantidad) { toast(`No alcanza el stock para restaurarla (quedan ${p.queda})`); return; }
+  }
+  const { error } = await sb.from('ventas').update({ anulada: valor }).eq('id', id);
+  if (error) { toast('No se pudo: ' + error.message); return; }
+  toast(valor ? 'Venta anulada — volvió al stock' : 'Venta restaurada');
+  cargar();
+}
+
+function abrirDetalleVenta(id) {
+  const v = ventas.find(x => x.id === id); if (!v) return;
+  const p = prendas.find(x => x.id === v.prenda_id) || {};
+  const d = new Date(v.creado);
+  modal(`
+    <h2 class="display">${esc(p.modelo || 'Venta')}</h2>
+    <p class="muted">${esc(p.categoria || '')}${p.color ? ' · ' + esc(p.color) : ''} · Talle ${esc(p.talle || '')}</p>
+    <div class="card" style="padding:12px;box-shadow:none;border:1.5px solid var(--line)">
+      <div class="row" style="justify-content:space-between"><span class="muted">Cantidad</span><b>${v.cantidad}</b></div>
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Pago</span><span class="badge p-${v.forma_pago}">${FORMAS[v.forma_pago].txt}</span></div>
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Total</span><b class="money">${money(v.total)}</b></div>
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Vendió</span><b>${esc(v.vendedor || '—')}</b></div>
+      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Cuándo</span><span>${d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span></div>
+      ${v.nota ? `<div style="margin-top:8px">“${esc(v.nota)}”</div>` : ''}
+    </div>
+    ${v.anulada
+      ? `<button class="btn" id="anul" style="width:100%;margin-top:14px">Restaurar venta</button>`
+      : `<button class="btn danger" id="anul" style="width:100%;margin-top:14px">Anular venta (vuelve al stock)</button>`}
+    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
+  `);
+  $('#anul').onclick = () => {
+    if (!v.anulada && !confirm('¿Anular esta venta? La prenda vuelve al stock.')) return;
+    cerrarModal(); anular(v.id, !v.anulada);
+  };
+}
+
+// ---------- Alta / edición de prendas ----------
+function abrirPrenda(key) {
+  const st = conStock();
+  const items = key ? st.filter(p => grupoKey(p) === key).sort((a, b) => ordenTalle(a.talle, b.talle)) : [];
+  const base = items[0] || { categoria: filtros.cat !== 'Todas' ? filtros.cat : 'Remeras', modelo: '', color: '', precio: '' };
+  let foto = items.find(i => i.foto_url)?.foto_url || null;
+  let fotoArchivo = null;
+  let filas = items.length
+    ? items.map(i => ({ id: i.id, talle: i.talle, cargado: i.cargado, vendido: i.vendido }))
+    : (base.categoria === 'Gorras' ? ['Único'] : TALLES_ROPA).map(t => ({ talle: t, cargado: 0, vendido: 0 }));
+  const cats = categoriasUsadas();
+
+  modal(`
+    <h2 class="display">${key ? 'Editar prenda' : 'Nueva prenda'}</h2>
+    <label class="lbl">Categoría</label>
+    <select class="input" id="fCat">${cats.map(c => `<option ${c === base.categoria ? 'selected' : ''}>${esc(c)}</option>`).join('')}<option value="__otra">Otra…</option></select>
+    <input class="input hidden" id="fCatOtra" placeholder="Nombre de la categoría" style="margin-top:6px">
+    <label class="lbl">Modelo / diseño</label>
+    <input class="input" id="fModelo" value="${esc(base.modelo)}" placeholder="Ej: Logo El Origen" maxlength="80">
+    <div class="row" style="gap:10px">
+      <div style="flex:1"><label class="lbl">Color</label><input class="input" id="fColor" value="${esc(base.color)}" placeholder="Ej: Negro" maxlength="40"></div>
+      <div style="flex:1"><label class="lbl">Precio ($)</label><input class="input" id="fPrecio" type="number" inputmode="numeric" min="0" step="1" value="${base.precio === '' ? '' : Number(base.precio)}" placeholder="0"></div>
+    </div>
+    <label class="lbl">Foto</label>
+    <div class="photo-pick">
+      <div class="thumb" id="fFotoPrev">${foto ? `<img src="${esc(foto)}" alt="">` : iconCam()}</div>
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <label class="btn sec" style="font-size:14px;padding:10px 14px;text-align:center">📷 ${foto ? 'Cambiar foto' : 'Subir foto'}<input type="file" id="fFoto" accept="image/*" hidden></label>
+        <button class="btn sec ${foto ? '' : 'hidden'}" id="fFotoQuitar" style="font-size:13px;padding:8px 12px">Quitar foto</button>
+      </div>
+    </div>
+    <label class="lbl">Talles y cantidad cargada</label>
+    <div class="preset">
+      ${[...TALLES_ROPA, 'XXXL', 'Único'].map(t => `<button class="chip" data-addt="${t}">+ ${t}</button>`).join('')}
+      <button class="chip" id="otroTalle">+ Otro</button>
+    </div>
+    <div class="talle-row small muted" style="margin-bottom:4px"><span>Talle</span><span style="text-align:center">Cargado</span><span style="text-align:center">Vendido</span><span></span></div>
+    <div id="filas"></div>
+    <div class="err" id="fErr"></div>
+    <button class="btn" id="fGuardar" style="width:100%;margin-top:6px">Guardar</button>
+    ${key ? `<button class="btn danger" id="fBorrar" style="width:100%;margin-top:8px">${items.some(i => i.vendido > 0) ? 'Ocultar del stock' : 'Borrar prenda'}</button>` : ''}
+    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cancelar</button>
+  `);
+
+  const pintarFilas = () => {
+    $('#filas').innerHTML = filas.map((f, i) => `
+      <div class="talle-row">
+        <span class="tname">${esc(f.talle)}</span>
+        <input class="input" type="number" inputmode="numeric" min="${f.vendido}" value="${f.cargado}" data-cant="${i}">
+        <span style="text-align:center" class="muted">${f.vendido}</span>
+        <button class="icon-btn" data-quitar="${i}" ${f.vendido > 0 ? 'disabled style="opacity:.25"' : ''} aria-label="Quitar talle">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+        </button>
+      </div>`).join('') || '<p class="muted small">Agregá al menos un talle.</p>';
+    document.querySelectorAll('[data-cant]').forEach(inp => inp.oninput = () => { filas[inp.dataset.cant].cargado = parseInt(inp.value) || 0; });
+    document.querySelectorAll('[data-quitar]').forEach(b => b.onclick = () => { filas.splice(Number(b.dataset.quitar), 1); pintarFilas(); });
+  };
+  const agregarTalle = t => {
+    t = t.trim(); if (!t) return;
+    if (filas.some(f => f.talle.toLowerCase() === t.toLowerCase())) return;
+    filas.push({ talle: t, cargado: 0, vendido: 0 });
+    filas.sort((a, b) => ordenTalle(a.talle, b.talle));
+    pintarFilas();
+  };
+  pintarFilas();
+  document.querySelectorAll('[data-addt]').forEach(b => b.onclick = () => agregarTalle(b.dataset.addt));
+  $('#otroTalle').onclick = () => { const t = prompt('Talle (ej: 10, 12, 38, Niño):'); if (t) agregarTalle(t); };
+  $('#fCat').onchange = () => $('#fCatOtra').classList.toggle('hidden', $('#fCat').value !== '__otra');
+  $('#fFoto').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    fotoArchivo = f;
+    $('#fFotoPrev').innerHTML = `<img src="${URL.createObjectURL(f)}" alt="">`;
+    $('#fFotoQuitar').classList.remove('hidden');
+  };
+  $('#fFotoQuitar').onclick = () => { foto = null; fotoArchivo = null; $('#fFotoPrev').innerHTML = iconCam(); $('#fFotoQuitar').classList.add('hidden'); };
+
+  $('#fGuardar').onclick = async () => {
+    const err = m => { $('#fErr').textContent = m; };
+    let categoria = $('#fCat').value === '__otra' ? $('#fCatOtra').value.trim() : $('#fCat').value;
+    const modelo = $('#fModelo').value.trim(), color = $('#fColor').value.trim();
+    const precio = Number($('#fPrecio').value);
+    if (!categoria) return err('Poné la categoría');
+    if (!modelo) return err('Poné el modelo o diseño');
+    if (!(precio >= 0) || $('#fPrecio').value === '') return err('Poné el precio');
+    if (!filas.length) return err('Agregá al menos un talle');
+    const bajo = filas.find(f => f.cargado < f.vendido);
+    if (bajo) return err(`Talle ${bajo.talle}: no puede tener menos de lo ya vendido (${bajo.vendido})`);
+    const nuevaKey = [categoria, modelo, color].join('|');
+    if (nuevaKey !== key && prendas.some(p => grupoKey(p) === nuevaKey)) return err('Ya existe una prenda con ese modelo y color en esa categoría');
+
+    const btn = $('#fGuardar'); btn.disabled = true; btn.textContent = 'Guardando…';
+    try {
+      if (fotoArchivo) foto = await subirFoto(fotoArchivo);
+      const comun = { categoria, modelo, color, precio, foto_url: foto, activo: true };
+      const quitar = items.filter(i => !filas.some(f => f.id === i.id)).map(i => i.id);
+      const ops = [];
+      if (quitar.length) ops.push(sb.from('prendas').delete().in('id', quitar));
+      for (const f of filas.filter(f => f.id)) ops.push(sb.from('prendas').update({ ...comun, talle: f.talle, cargado: f.cargado }).eq('id', f.id));
+      const nuevas = filas.filter(f => !f.id).map(f => ({ ...comun, talle: f.talle, cargado: f.cargado }));
+      if (nuevas.length) ops.push(sb.from('prendas').insert(nuevas));
+      const res = await Promise.all(ops);
+      const e = res.find(r => r.error);
+      if (e) throw e.error;
+      cerrarModal();
+      toast(key ? 'Prenda actualizada ✓' : 'Prenda agregada ✓');
+      cargar();
+    } catch (e) {
+      err('No se pudo guardar: ' + (e.message || e));
+      btn.disabled = false; btn.textContent = 'Guardar';
+    }
+  };
+  if (key) $('#fBorrar').onclick = async () => {
+    const conVentas = items.some(i => i.vendido > 0);
+    if (!confirm(conVentas ? '¿Ocultar esta prenda del stock? Sus ventas quedan registradas.' : '¿Borrar esta prenda y todos sus talles?')) return;
+    const ids = items.map(i => i.id);
+    const { error } = conVentas
+      ? await sb.from('prendas').update({ activo: false }).in('id', ids)
+      : await sb.from('prendas').delete().in('id', ids);
+    if (error) { toast('No se pudo: ' + error.message); return; }
+    cerrarModal(); toast(conVentas ? 'Prenda oculta' : 'Prenda borrada'); cargar();
+  };
+}
+
+async function subirFoto(file) {
+  const blob = await achicarImagen(file, 1200, 0.82);
+  const nombre = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const { error } = await sb.storage.from('fotos').upload(nombre, blob, { contentType: 'image/jpeg', cacheControl: '31536000' });
+  if (error) throw error;
+  return sb.storage.from('fotos').getPublicUrl(nombre).data.publicUrl;
+}
+function achicarImagen(file, max, calidad) {
+  return new Promise((ok, mal) => {
+    const img = new Image();
+    img.onload = () => {
+      const k = Math.min(1, max / Math.max(img.width, img.height));
+      const c = document.createElement('canvas');
+      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+      c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+      c.toBlob(b => b ? ok(b) : mal(new Error('No se pudo procesar la foto')), 'image/jpeg', calidad);
+      URL.revokeObjectURL(img.src);
+    };
+    img.onerror = () => mal(new Error('Formato de foto no soportado'));
+    img.src = URL.createObjectURL(file);
+  });
+}
+
+// ---------- Excel ----------
+async function descargarExcel() {
+  if (!window.XLSX) {
+    await new Promise((ok, mal) => { const s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = ok; s.onerror = mal; document.head.appendChild(s); })
+      .catch(() => toast('No se pudo cargar el generador de Excel'));
+    if (!window.XLSX) return;
+  }
+  const r = resumenDatos();
+  const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
+  const wb = XLSX.utils.book_new();
+  const resumen = [
+    ['Merch Festivalazo 2026', ''], ['Generado', new Date().toLocaleString('es-AR')], [],
+    ['Total cobrado', r.ef + r.tr], ['Efectivo', r.ef], ['Transferencia', r.tr],
+    ['Prendas vendidas', r.vendidasU], ['Prendas regaladas', r.rgU], ['Valor regalado (lista)', r.rgValor],
+    ['Prendas que quedan', r.quedaU], ['Valor que queda (lista)', r.quedaValor], [],
+    ['Por persona', 'Prendas', 'Efectivo', 'Transferencia', 'Regalos'],
+    ...Object.entries(r.porVend).map(([n, x]) => [n, x.unidades, x.efectivo, x.transferencia, x.regalos]),
+  ];
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(resumen), 'Resumen');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(r.st.map(p => ({
+    Categoría: p.categoria, Modelo: p.modelo, Color: p.color, Talle: p.talle, Precio: Number(p.precio),
+    Cargado: p.cargado, Vendido: p.vendido - p.regalado, Regalado: p.regalado, Queda: p.queda, Cobrado: p.cobrado, Activa: p.activo ? 'Sí' : 'No',
+  }))), 'Stock');
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(ventas.map(v => {
+    const p = porId[v.prenda_id] || {};
+    return {
+      Fecha: new Date(v.creado).toLocaleString('es-AR'), Categoría: p.categoria, Modelo: p.modelo, Color: p.color, Talle: p.talle,
+      Cantidad: v.cantidad, Pago: FORMAS[v.forma_pago].txt, 'Precio unit.': Number(v.precio_unit), Total: Number(v.total),
+      Vendió: v.vendedor, Nota: v.nota || '', Anulada: v.anulada ? 'Sí' : '',
+    };
+  })), 'Ventas');
+  XLSX.writeFile(wb, `merch-festivalazo-${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+// ---------- UI helpers ----------
+function iconCam() {
+  return '<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>';
+}
+function modal(html) {
+  $('#modal').innerHTML = `<div class="backdrop"><div class="sheet"><div class="grab"></div>${html}</div></div>`;
+  const bd = $('#modal .backdrop');
+  bd.onclick = e => { if (e.target === bd) cerrarModal(); };
+  bd.querySelectorAll('[data-close]').forEach(b => b.onclick = cerrarModal);
+}
+function cerrarModal() { $('#modal').innerHTML = ''; }
+let toastTimer;
+function toast(msg, accion, fn) {
+  document.querySelector('.toast')?.remove();
+  const t = document.createElement('div');
+  t.className = 'toast';
+  t.innerHTML = `<span>${esc(msg)}</span>${accion ? `<button>${esc(accion)}</button>` : ''}`;
+  if (accion) t.querySelector('button').onclick = () => { t.remove(); fn(); };
+  document.body.appendChild(t);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.remove(), accion ? 6000 : 3000);
+}
+function verFoto(url) {
+  const v = document.createElement('div');
+  v.className = 'viewer';
+  v.innerHTML = `<img src="${esc(url)}" alt="">`;
+  v.onclick = () => v.remove();
+  document.body.appendChild(v);
+}
+function pedirVendedor(despues) {
+  const previos = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
+  modal(`
+    <h2 class="display">¿Quién está vendiendo?</h2>
+    <p class="muted small">Se guarda en este celu y queda anotado en cada venta.</p>
+    ${previos.length ? `<div class="chips" style="flex-wrap:wrap">${previos.map(n => `<button class="chip" data-nombre="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
+    <input class="input" id="nombre" placeholder="Tu nombre" value="${esc(vendedor)}" maxlength="30">
+    <button class="btn" id="okNombre" style="width:100%;margin-top:12px">Listo</button>
+  `);
+  const ok = n => {
+    n = n.trim(); if (!n) return;
+    vendedor = n; ls.set('mf_vendedor', n);
+    cerrarModal(); render(); despues && despues();
+  };
+  document.querySelectorAll('[data-nombre]').forEach(b => b.onclick = () => ok(b.dataset.nombre));
+  $('#okNombre').onclick = () => ok($('#nombre').value);
+  $('#nombre').onkeydown = e => { if (e.key === 'Enter') ok($('#nombre').value); };
+  setTimeout(() => $('#nombre')?.focus(), 100);
+}
+function menu() {
+  modal(`
+    <h2 class="display">Menú</h2>
+    <button class="btn sec" id="mNombre" style="width:100%;margin-top:12px">👤 Cambiar quién vende</button>
+    <button class="btn sec" id="mRecargar" style="width:100%;margin-top:8px">↻ Actualizar datos</button>
+    <button class="btn sec" id="mOcultas" style="width:100%;margin-top:8px">Ver prendas ocultas</button>
+    <button class="btn danger" id="mSalir" style="width:100%;margin-top:8px">Cerrar sesión</button>
+    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
+  `);
+  $('#mNombre').onclick = () => pedirVendedor();
+  $('#mRecargar').onclick = () => { cerrarModal(); cargar(); };
+  $('#mOcultas').onclick = () => {
+    const ocultas = grupos(conStock().filter(p => !p.activo));
+    modal(`<h2 class="display">Prendas ocultas</h2>
+      ${ocultas.length ? ocultas.map(g => `<div class="row" style="justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line)">
+        <span>${esc(g.modelo)}${g.color ? ' · ' + esc(g.color) : ''} <span class="muted small">(${esc(g.categoria)})</span></span>
+        <button class="chip" data-mostrar="${esc(g.key)}">Mostrar</button></div>`).join('') : '<p class="muted">No hay prendas ocultas.</p>'}
+      <button class="btn sec" style="width:100%;margin-top:12px" data-close>Cerrar</button>`);
+    document.querySelectorAll('[data-mostrar]').forEach(b => b.onclick = async () => {
+      const ids = prendas.filter(p => grupoKey(p) === b.dataset.mostrar).map(p => p.id);
+      const { error } = await sb.from('prendas').update({ activo: true }).in('id', ids);
+      if (error) return toast(error.message);
+      cerrarModal(); toast('Prenda visible de nuevo'); cargar();
+    });
+  };
+  $('#mSalir').onclick = async () => { if (!confirm('¿Cerrar sesión en este celu?')) return; cerrarModal(); await sb.auth.signOut(); };
+}
+
+// ---------- Arranque ----------
+let canal;
+function iniciarApp() {
+  $('#login').classList.add('hidden');
+  $('#app').classList.remove('hidden');
+  cargar().then(() => { if (!vendedor) pedirVendedor(); });
+  if (!canal) {
+    canal = sb.channel('cambios')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'prendas' }, recargarPronto)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'ventas' }, recargarPronto)
+      .subscribe();
+  }
+}
+function mostrarLogin() {
+  if (canal) { sb.removeChannel(canal); canal = null; }
+  $('#app').classList.add('hidden');
+  $('#login').classList.remove('hidden');
+  setTimeout(() => $('#pass').focus(), 100);
+}
+
+$('#loginForm').onsubmit = async e => {
+  e.preventDefault();
+  $('#loginErr').textContent = '';
+  $('#loginBtn').disabled = true; $('#loginBtn').textContent = 'Entrando…';
+  const { error } = await sb.auth.signInWithPassword({ email: EMAIL, password: $('#pass').value });
+  $('#loginBtn').disabled = false; $('#loginBtn').textContent = 'Entrar';
+  if (error) $('#loginErr').textContent = error.message.includes('Invalid') ? 'Contraseña incorrecta' : error.message;
+};
+document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); });
+$('#fab').onclick = () => abrirPrenda(null);
+$('#userChip').onclick = () => pedirVendedor();
+$('#menuBtn').onclick = menu;
+const actualizarConexion = () => $('#offline').classList.toggle('hidden', navigator.onLine);
+addEventListener('online', () => { actualizarConexion(); cargar(); });
+addEventListener('offline', actualizarConexion);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && !$('#app').classList.contains('hidden')) cargar(); });
+
+sb.auth.onAuthStateChange((evento, sesion) => {
+  if (evento === 'INITIAL_SESSION' || evento === 'SIGNED_IN' || evento === 'SIGNED_OUT') {
+    sesion ? iniciarApp() : mostrarLogin();
+  }
+});
+</script>
+</body>
+</html>
