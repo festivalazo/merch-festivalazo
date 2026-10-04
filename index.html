@@ -139,6 +139,12 @@ label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin
 .kpi.big b{color:var(--brand)}
 .kpi.big b{font-size:34px;font-family:"Bebas Neue",sans-serif;font-weight:400;letter-spacing:.03em}
 .sec-title{font-size:20px;margin:18px 0 8px}
+.persona{padding:12px;margin-bottom:8px}
+.persona-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px;font-size:16px}
+.persona-head .money{font-weight:700;color:var(--brand)}
+.persona-sub{font-size:12px;color:var(--muted);margin:3px 0 8px}
+.persona-item{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:7px 0;border-top:1px solid var(--line);font-size:13px}
+.persona-item > span:first-child{min-width:0;overflow-wrap:anywhere}
 .table-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:13px}
 th,td{padding:8px 10px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap}
@@ -451,8 +457,13 @@ function resumenDatos() {
   const porVend = {};
   for (const v of act) {
     const k = v.vendedor || '(sin nombre)';
-    const x = porVend[k] ||= { unidades: 0, efectivo: 0, transferencia: 0, regalos: 0 };
+    const x = porVend[k] ||= { unidades: 0, efectivo: 0, transferencia: 0, regalos: 0, items: {} };
     if (v.forma_pago === 'regalo') x.regalos += v.cantidad; else { x.unidades += v.cantidad; x[v.forma_pago] += Number(v.total); }
+    // Detalle: misma prenda y talle con la misma forma de pago se agrupan
+    const p = porId[v.prenda_id] || {};
+    const ik = [v.prenda_id, v.forma_pago, v.forma_pago === 'regalo' ? v.nota || '' : ''].join('|');
+    const it = x.items[ik] ||= { nombre: `${p.modelo || '¿?'}${p.color ? ' ' + p.color : ''} · ${p.talle || ''}`, forma: v.forma_pago, nota: v.forma_pago === 'regalo' ? v.nota : '', cant: 0, total: 0 };
+    it.cant += v.cantidad; it.total += Number(v.total);
   }
   const porCat = {};
   for (const p of st) {
@@ -486,10 +497,19 @@ function renderResumen() {
     <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
 
     <h2 class="sec-title display">Por persona</h2>
-    <div class="card table-wrap"><table>
-      <tr><th>Quién</th><th>Prendas</th><th>Efectivo</th><th>Transf.</th><th>Regalos</th></tr>
-      ${filasVend.map(([n, x]) => `<tr><td>${esc(n)}</td><td>${x.unidades}</td><td class="money">${money(x.efectivo)}</td><td class="money">${money(x.transferencia)}</td><td>${x.regalos}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Sin ventas todavía</td></tr>'}
-    </table></div>
+    ${filasVend.map(([n, x]) => `
+      <div class="card persona">
+        <div class="persona-head">
+          <b>👤 ${esc(n)}</b>
+          <span class="money">${money(x.efectivo + x.transferencia)}</span>
+        </div>
+        <div class="persona-sub">${x.unidades} vendida${x.unidades === 1 ? '' : 's'} · <span style="color:var(--ok)">efectivo ${money(x.efectivo)}</span> · <span style="color:var(--transf)">transf. ${money(x.transferencia)}</span>${x.regalos ? ` · <span style="color:var(--gift)">${x.regalos} regalo${x.regalos === 1 ? '' : 's'}</span>` : ''}</div>
+        ${Object.values(x.items).sort((a, b) => a.nombre.localeCompare(b.nombre)).map(it => `
+          <div class="persona-item">
+            <span><b>${it.cant}×</b> ${esc(it.nombre)}${it.nota ? ` <span class="muted">→ ${esc(it.nota)}</span>` : ''}</span>
+            <span class="row" style="gap:6px;flex:0 0 auto">${it.forma === 'regalo' ? '' : `<span class="money">${money(it.total)}</span>`}<span class="badge p-${it.forma}">${it.forma === 'transferencia' ? 'Transf.' : FORMAS[it.forma].txt}</span></span>
+          </div>`).join('')}
+      </div>`).join('') || '<div class="card" style="padding:12px"><span class="muted">Sin ventas todavía</span></div>'}
 
     <h2 class="sec-title display">Por categoría</h2>
     <div class="card table-wrap"><table>
