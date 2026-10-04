@@ -224,8 +224,6 @@ td.q0{color:#d33;font-weight:700}
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c0 2-1.8 3-4 3s-4-1-4-3Z"/></svg>Stock</button>
     <button data-tab="ventas">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v16H4z"/><path d="M8 9h8M8 13h8M8 17h5"/></svg>Vendido</button>
-    <button data-tab="resumen">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 20V10M12 20V4M19 20v-7"/></svg>Resumen</button>
   </nav>
 </div>
 
@@ -326,7 +324,6 @@ function render() {
 
 function renderStock() {
   const todos = conStock().filter(p => p.activo);
-  const tot = todos.reduce((a, p) => (a.c += p.cargado, a.v += p.vendido, a.q += p.queda, a), { c: 0, v: 0, q: 0 });
   const q = filtros.q.trim().toLowerCase();
   let lista = todos.filter(p =>
     (filtros.cat === 'Todas' || p.categoria === filtros.cat) &&
@@ -336,11 +333,6 @@ function renderStock() {
   const cats = categoriasUsadas().filter(c => todos.some(p => p.categoria === c));
 
   let html = `
-    <div class="totals">
-      <div><b>${tot.c}</b><span>Cargado</span></div>
-      <div><b>${tot.v}</b><span>Vendido</span></div>
-      <div><b style="color:var(--brand)">${tot.q}</b><span>Quedan</span></div>
-    </div>
     <div class="search">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
       <input class="input" id="q" placeholder="Buscar modelo, color, talle…" value="${esc(filtros.q)}">
@@ -400,18 +392,8 @@ function renderVentas() {
   const lista = ventas.filter(v =>
     (filtros.forma === 'todas' || v.forma_pago === filtros.forma) &&
     (filtros.vendedor === 'todos' || v.vendedor === filtros.vendedor));
-  const activas = lista.filter(v => !v.anulada);
-  const sum = f => activas.filter(v => v.forma_pago === f);
-  const ef = sum('efectivo').reduce((s, v) => s + Number(v.total), 0);
-  const tr = sum('transferencia').reduce((s, v) => s + Number(v.total), 0);
-  const rg = sum('regalo').reduce((s, v) => s + v.cantidad, 0);
 
   let html = `
-    <div class="sum-pay">
-      <div class="p-efectivo"><b class="money">${money(ef)}</b><span>Efectivo</span></div>
-      <div class="p-transferencia"><b class="money">${money(tr)}</b><span>Transferencia</span></div>
-      <div class="p-regalo"><b>${rg}</b><span>Regaladas</span></div>
-    </div>
     <div class="chips">
       ${[['todas', 'Todas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['regalo', 'Regalos']].map(([k, t]) =>
         `<button class="chip ${filtros.forma === k ? 'on' : ''}" data-forma="${k}">${t}</button>`).join('')}
@@ -471,7 +453,9 @@ function resumenDatos() {
     const x = porCat[p.categoria] ||= { cargado: 0, vendido: 0, regalado: 0, queda: 0, cobrado: 0 };
     x.cargado += p.cargado; x.vendido += p.vendido - p.regalado; x.regalado += p.regalado; x.queda += p.queda; x.cobrado += p.cobrado;
   }
-  return { st, ef, tr, rgU, rgValor, vendidasU, quedaU, quedaValor, porVend, porCat };
+  const cargadoU = activas.reduce((s, p) => s + p.cargado, 0);
+  const cargadoValor = activas.reduce((s, p) => s + p.cargado * Number(p.precio), 0);
+  return { st, ef, tr, rgU, rgValor, vendidasU, quedaU, quedaValor, cargadoU, cargadoValor, porVend, porCat };
 }
 
 function renderResumen() {
@@ -480,14 +464,18 @@ function renderResumen() {
   const filasCat = Object.entries(r.porCat);
   const detalle = [...r.st].sort((a, b) => a.categoria.localeCompare(b.categoria) || a.modelo.localeCompare(b.modelo) || a.color.localeCompare(b.color) || ordenTalle(a.talle, b.talle));
   $('#view').innerHTML = `
+    <div class="row" style="justify-content:space-between;margin:2px 0 12px">
+      <h2 class="display" style="font-size:30px">Resumen</h2>
+      <button class="chip" id="volver">← Volver</button>
+    </div>
     <div class="kpis">
       <div class="card kpi big"><span>Total cobrado</span><b class="money">${money(r.ef + r.tr)}</b></div>
       <div class="card kpi"><span>Efectivo</span><b class="money" style="color:var(--ok)">${money(r.ef)}</b></div>
       <div class="card kpi"><span>Transferencia</span><b class="money" style="color:var(--transf)">${money(r.tr)}</b></div>
+      <div class="card kpi"><span>Stock total cargado</span><b>${r.cargadoU}</b><span class="money">${money(r.cargadoValor)}</span></div>
       <div class="card kpi"><span>Prendas vendidas</span><b>${r.vendidasU}</b></div>
-      <div class="card kpi"><span>Regaladas</span><b style="color:var(--gift)">${r.rgU}</b><span>${money(r.rgValor)} a precio de lista</span></div>
-      <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span>${money(r.quedaValor)} a precio de lista</span></div>
-      <div class="card kpi"><span>Ventas registradas</span><b>${ventas.filter(v => !v.anulada).length}</b></div>
+      <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span class="money">${money(r.quedaValor)}</span></div>
+      <div class="card kpi"><span>Regaladas</span><b style="color:var(--gift)">${r.rgU}</b><span class="money">${money(r.rgValor)}</span></div>
     </div>
     <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
 
@@ -509,6 +497,7 @@ function renderResumen() {
       ${detalle.map(p => `<tr><td>${esc(p.modelo)}${p.color ? ' · ' + esc(p.color) : ''}${p.activo ? '' : ' <span class="muted">(oculta)</span>'}</td><td>${esc(p.talle)}</td><td>${p.cargado}</td><td>${p.vendido - p.regalado}</td><td>${p.regalado}</td><td class="${p.queda <= 0 ? 'q0' : ''}">${p.queda}</td></tr>`).join('') || '<tr><td colspan="6" class="muted">Sin prendas</td></tr>'}
     </table></div>`;
   $('#excel').onclick = descargarExcel;
+  $('#volver').onclick = () => { tab = 'stock'; render(); window.scrollTo(0, 0); };
 }
 
 // ---------- Venta ----------
@@ -845,7 +834,8 @@ function pedirVendedor(despues) {
 function menu() {
   modal(`
     <h2 class="display">Menú</h2>
-    <button class="btn sec" id="mNombre" style="width:100%;margin-top:12px">👤 Cambiar quién vende</button>
+    <button class="btn" id="mResumen" style="width:100%;margin-top:12px">📊 Resumen de stock y ventas</button>
+    <button class="btn sec" id="mNombre" style="width:100%;margin-top:8px">👤 Cambiar quién vende</button>
     <button class="btn sec" id="mAgregar" style="width:100%;margin-top:8px">＋ Agregar prenda</button>
     <button class="btn sec" id="mRecargar" style="width:100%;margin-top:8px">↻ Actualizar datos</button>
     <button class="btn sec" id="mOcultas" style="width:100%;margin-top:8px">Ver prendas ocultas</button>
@@ -853,6 +843,7 @@ function menu() {
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
   `);
   $('#mNombre').onclick = () => pedirVendedor();
+  $('#mResumen').onclick = () => { cerrarModal(); tab = 'resumen'; render(); window.scrollTo(0, 0); };
   $('#mAgregar').onclick = () => abrirPrenda(null);
   $('#mRecargar').onclick = () => { cerrarModal(); cargar(); };
   $('#mOcultas').onclick = () => {
