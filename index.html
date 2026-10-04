@@ -158,6 +158,23 @@ td.q0{color:#d33;font-weight:700}
 .pay{border:2px solid transparent;border-radius:14px;padding:12px 4px;font-weight:700;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .pay svg{width:26px;height:26px}
 .pay.on{border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
+.vender{display:block;width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:var(--brand);color:var(--brand-ink);font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:.06em;line-height:1}
+.vender:disabled{background:var(--line);color:var(--muted)}
+.vender:active{transform:scale(.98)}
+.step-lbl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
+.talles-big{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
+.tb{border:2px solid var(--line);background:var(--bg);border-radius:14px;padding:10px 4px;line-height:1.1}
+.tb b{display:block;font-size:22px}
+.tb span{font-size:11px;color:var(--muted)}
+.tb.on{border-color:var(--brand);background:var(--warn-bg)}
+.tb.on b{color:var(--brand)}
+.tb:disabled{opacity:.35}
+.pay-btns.big{margin-top:0}
+.pay-btns.big .pay{padding:18px 4px;font-size:15px}
+.pay-btns.big .pay svg{width:30px;height:30px}
+.pay:disabled{opacity:.35}
+.stepper.mini button{width:36px;height:34px;font-size:18px}
+.stepper.mini input{width:36px;font-size:15px;padding:0}
 .total-line{display:flex;justify-content:space-between;align-items:baseline;margin:16px 2px 10px}
 .total-line b{font-size:28px;font-family:"Bebas Neue",sans-serif;font-weight:400;letter-spacing:.03em}
 .talle-row{display:grid;grid-template-columns:1fr 92px 64px 36px;gap:8px;align-items:center;margin-bottom:6px}
@@ -302,7 +319,7 @@ const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p
 // ---------- Render ----------
 function render() {
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
-  $('#fab').classList.toggle('hidden', tab !== 'stock');
+  $('#fab').classList.add('hidden');
   $('#userChip').textContent = vendedor ? '👤 ' + vendedor : '¿Quién vende?';
   ({ stock: renderStock, ventas: renderVentas, resumen: renderResumen })[tab]();
 }
@@ -316,7 +333,7 @@ function renderStock() {
     (!q || [p.modelo, p.color, p.categoria, p.talle].join(' ').toLowerCase().includes(q)));
   let gs = grupos(lista);
   if (filtros.soloStock) gs = gs.filter(g => g.queda > 0);
-  const cats = categoriasUsadas();
+  const cats = categoriasUsadas().filter(c => todos.some(p => p.categoria === c));
 
   let html = `
     <div class="totals">
@@ -334,7 +351,7 @@ function renderStock() {
     </div>`;
 
   if (!prendas.length) {
-    html += `<div class="empty"><p><b>Todavía no hay prendas cargadas.</b></p><p>Tocá <b>+</b> para agregar la primera.</p></div>`;
+    html += `<div class="empty"><p><b>Todavía no hay prendas cargadas.</b></p><p>Agregalas desde el menú <b>⋮</b> → Agregar prenda.</p></div>`;
   } else if (!gs.length) {
     html += `<div class="empty">No hay prendas que coincidan.</div>`;
   }
@@ -356,9 +373,10 @@ function renderStock() {
           </div>
           <div class="prod-sub">${g.color ? esc(g.color) + ' · ' : ''}<b class="money">${g.precio}</b> · quedan <b>${g.queda}</b>/${g.cargado}</div>
           <div class="sizes">
-            ${g.items.map(i => `<button class="size ${i.queda <= 0 ? 'zero' : i.queda <= 2 ? 'low' : ''}" data-sell="${i.id}" ${i.queda <= 0 ? 'disabled' : ''}>
+            ${g.items.map(i => `<button class="size ${i.queda <= 0 ? 'zero' : i.queda <= 2 ? 'low' : ''}" data-sell="${i.id}" data-key="${esc(g.key)}" ${i.queda <= 0 ? 'disabled' : ''}>
               <b>${esc(i.talle)}</b><span>${i.queda}/${i.cargado}</span></button>`).join('')}
           </div>
+          <button class="vender" data-vender="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>${g.queda <= 0 ? 'Agotada' : 'Vender'}</button>
         </div>
       </article>`;
     }
@@ -370,7 +388,8 @@ function renderStock() {
   qi.oninput = () => { filtros.q = qi.value; const pos = qi.selectionStart; renderStock(); const n = $('#q'); n.focus(); n.setSelectionRange(pos, pos); };
   document.querySelectorAll('[data-cat]').forEach(b => b.onclick = () => { filtros.cat = b.dataset.cat; renderStock(); });
   $('#soloStock').onclick = () => { filtros.soloStock = !filtros.soloStock; renderStock(); };
-  document.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => abrirVenta(Number(b.dataset.sell)));
+  document.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => abrirVenta(b.dataset.key, Number(b.dataset.sell)));
+  document.querySelectorAll('[data-vender]').forEach(b => b.onclick = () => abrirVenta(b.dataset.vender));
   document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => abrirPrenda(b.dataset.edit));
   document.querySelectorAll('.thumb[data-key]').forEach(b => b.onclick = () => b.dataset.foto ? verFoto(b.dataset.foto) : abrirPrenda(b.dataset.key));
 }
@@ -493,61 +512,67 @@ function renderResumen() {
 }
 
 // ---------- Venta ----------
-function abrirVenta(id) {
-  const p = conStock().find(x => x.id === id);
-  if (!p || p.queda <= 0) return;
-  if (!vendedor) { pedirVendedor(() => abrirVenta(id)); return; }
-  let cant = 1, forma = null;
+// 3 toques: VENDER → talle → forma de pago (se registra al tocar; DESHACER por si acaso)
+function abrirVenta(key, preId) {
+  const items = conStock().filter(p => grupoKey(p) === key && p.activo).sort((a, b) => ordenTalle(a.talle, b.talle));
+  if (!items.some(i => i.queda > 0)) return;
+  if (!vendedor) { pedirVendedor(() => abrirVenta(key, preId)); return; }
+  const base = items[0];
+  const conStk = items.filter(i => i.queda > 0);
+  let sel = items.find(i => i.id === preId && i.queda > 0) || (conStk.length === 1 ? conStk[0] : null);
+  let cant = 1, guardando = false;
+  const foto = items.find(i => i.foto_url)?.foto_url;
   modal(`
     <div class="sell-top">
-      <div class="thumb">${p.foto_url ? `<img src="${esc(p.foto_url)}" alt="">` : iconCam()}</div>
+      <div class="thumb">${foto ? `<img src="${esc(foto)}" alt="">` : iconCam()}</div>
       <div>
-        <h2 class="display">${esc(p.modelo)}</h2>
-        <div class="muted small">${esc(p.categoria)}${p.color ? ' · ' + esc(p.color) : ''} · Talle <b style="color:var(--ink)">${esc(p.talle)}</b></div>
-        <div class="small"><b class="money">${money(p.precio)}</b> · quedan ${p.queda}</div>
+        <h2 class="display">${esc(base.modelo)}</h2>
+        <div class="muted small">${esc(base.categoria)}${base.color ? ' · ' + esc(base.color) : ''}</div>
       </div>
     </div>
-    <div class="row" style="justify-content:space-between">
-      <span style="font-weight:600">Cantidad</span>
-      <div class="stepper"><button id="menos">−</button><input id="cant" inputmode="numeric" value="1"><button id="mas">+</button></div>
+    <div class="step-lbl">1 · Talle</div>
+    <div class="talles-big">
+      ${items.map(i => `<button class="tb" data-t="${i.id}" ${i.queda <= 0 ? 'disabled' : ''}><b>${esc(i.talle)}</b><span>${i.queda <= 0 ? 'agotado' : 'quedan ' + i.queda}</span></button>`).join('')}
     </div>
-    <div class="pay-btns">
+    <div class="step-lbl row" style="justify-content:space-between">
+      <span>2 · Cómo paga <span class="money" id="tot" style="color:var(--ink)"></span></span>
+      <div class="stepper mini"><button id="menos" aria-label="Menos">−</button><input id="cant" inputmode="numeric" value="1" aria-label="Cantidad"><button id="mas" aria-label="Más">+</button></div>
+    </div>
+    <div class="pay-btns big">
       ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.txt}</button>`).join('')}
     </div>
-    <div id="notaBox" class="hidden">
-      <label class="lbl">¿A quién o por qué? (opcional)</label>
-      <input class="input" id="nota" maxlength="120" placeholder="Ej: banda, staff, sorteo…">
-    </div>
-    <div class="total-line"><span class="muted" id="totLbl">Total</span><b class="money" id="tot"></b></div>
-    <button class="btn" id="confirmar" style="width:100%" disabled>Elegí cómo paga</button>
-    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cancelar</button>
+    <input class="input" id="nota" maxlength="120" placeholder="Nota opcional (ej: regalo a la banda)" style="margin-top:10px;font-size:14px;padding:10px">
+    <button class="btn sec" style="width:100%;margin-top:10px" data-close>Cancelar</button>
   `);
   const upd = () => {
-    cant = Math.max(1, Math.min(p.queda, parseInt($('#cant').value) || 1));
+    const max = sel ? sel.queda : 1;
+    cant = Math.max(1, Math.min(max, parseInt($('#cant').value) || 1));
     $('#cant').value = cant;
-    $('#tot').textContent = forma === 'regalo' ? money(0) : money(p.precio * cant);
-    $('#totLbl').textContent = forma === 'regalo' ? `Regalo (${money(p.precio * cant)} de lista)` : 'Total';
-    document.querySelectorAll('[data-pay]').forEach(b => b.classList.toggle('on', b.dataset.pay === forma));
-    $('#notaBox').classList.toggle('hidden', forma !== 'regalo');
-    const btn = $('#confirmar');
-    btn.disabled = !forma;
-    btn.textContent = !forma ? 'Elegí cómo paga' : forma === 'regalo' ? `Registrar regalo (${cant})` : `Confirmar venta · ${money(p.precio * cant)}`;
+    document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', sel && Number(b.dataset.t) === sel.id));
+    document.querySelectorAll('[data-pay]').forEach(b => b.disabled = !sel || guardando);
+    $('#tot').textContent = sel ? '· ' + money(sel.precio * cant) : '';
   };
+  document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { sel = items.find(i => i.id === Number(b.dataset.t)); upd(); });
   $('#menos').onclick = () => { $('#cant').value = cant - 1; upd(); };
   $('#mas').onclick = () => { $('#cant').value = cant + 1; upd(); };
   $('#cant').onchange = upd;
-  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => { forma = b.dataset.pay; upd(); });
-  $('#confirmar').onclick = async () => {
-    const btn = $('#confirmar'); btn.disabled = true; btn.textContent = 'Guardando…';
+  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
+    if (!sel || guardando) return;
+    guardando = true; upd();
+    const forma = b.dataset.pay;
+    b.innerHTML = 'Guardando…';
     const { data, error } = await sb.rpc('vender', {
-      p_prenda: p.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor,
-      p_nota: forma === 'regalo' ? $('#nota').value : null,
+      p_prenda: sel.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor, p_nota: $('#nota').value || null,
     });
-    if (error) { toast(error.message.replace(/^.*?: /, '')); upd(); return; }
+    if (error) {
+      guardando = false; b.innerHTML = FORMAS[forma].icon + FORMAS[forma].txt; upd();
+      toast(error.message.replace(/^.*?: /, '')); return;
+    }
     cerrarModal();
-    toast(`${forma === 'regalo' ? 'Regalo registrado' : 'Venta registrada'} ✓ ${p.modelo} ${p.talle}`, 'Deshacer', () => anular(data, true));
+    const detalle = `${cant > 1 ? cant + '× ' : ''}${base.modelo} ${sel.talle}`;
+    toast(forma === 'regalo' ? `🎁 Regalo · ${detalle}` : `✓ ${detalle} · ${money(sel.precio * cant)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anular(data, true));
     cargar();
-  };
+  });
   upd();
 }
 
@@ -821,12 +846,14 @@ function menu() {
   modal(`
     <h2 class="display">Menú</h2>
     <button class="btn sec" id="mNombre" style="width:100%;margin-top:12px">👤 Cambiar quién vende</button>
+    <button class="btn sec" id="mAgregar" style="width:100%;margin-top:8px">＋ Agregar prenda</button>
     <button class="btn sec" id="mRecargar" style="width:100%;margin-top:8px">↻ Actualizar datos</button>
     <button class="btn sec" id="mOcultas" style="width:100%;margin-top:8px">Ver prendas ocultas</button>
     <button class="btn danger" id="mSalir" style="width:100%;margin-top:8px">Cerrar sesión</button>
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
   `);
   $('#mNombre').onclick = () => pedirVendedor();
+  $('#mAgregar').onclick = () => abrirPrenda(null);
   $('#mRecargar').onclick = () => { cerrarModal(); cargar(); };
   $('#mOcultas').onclick = () => {
     const ocultas = grupos(conStock().filter(p => !p.activo));
