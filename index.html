@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Merch Festivalazo 2026</title>
-<meta name="description" content="Stock y ventas de remeras y ropa del Festivalazo 2026">
+<title>Merch Festivalazo</title>
+<meta name="description" content="Stock y ventas de remeras y ropa del Festivalazo">
 <meta name="theme-color" content="#000000">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="img/icon-192.png">
@@ -196,7 +196,7 @@ td.q0{color:#d33;font-weight:700}
 <!-- LOGIN -->
 <section id="login" class="hidden">
   <form class="login-card" id="loginForm">
-    <h1 class="display">Merch<br><span>Festivalazo</span> 2026</h1>
+    <h1 class="display">Merch<br><span>Festivalazo</span></h1>
     <p>Stock y ventas de ropa del evento.</p>
     <input id="pass" type="password" placeholder="Contraseña" autocomplete="current-password" required>
     <button class="btn" type="submit" id="loginBtn">Entrar</button>
@@ -208,7 +208,7 @@ td.q0{color:#d33;font-weight:700}
 <div id="app" class="hidden">
   <header>
     <img class="logo" src="img/logo.jpg" alt="">
-    <h1 class="display">Merch <span>Festivalazo</span> 26</h1>
+    <h1 class="display">Merch <span>Festivalazo</span></h1>
     <button class="chip-user" id="userChip" title="Cambiar quién vende"></button>
     <button class="icon-btn" id="menuBtn" aria-label="Menú">
       <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
@@ -760,7 +760,7 @@ async function descargarExcel() {
   const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
   const wb = XLSX.utils.book_new();
   const resumen = [
-    ['Merch Festivalazo 2026', ''], ['Generado', new Date().toLocaleString('es-AR')], [],
+    ['Merch Festivalazo', ''], ['Generado', new Date().toLocaleString('es-AR')], [],
     ['Total cobrado', r.ef + r.tr], ['Efectivo', r.ef], ['Transferencia', r.tr],
     ['Prendas vendidas', r.vendidasU], ['Prendas regaladas', r.rgU], ['Valor regalado (lista)', r.rgValor],
     ['Prendas que quedan', r.quedaU], ['Valor que queda (lista)', r.quedaValor], [],

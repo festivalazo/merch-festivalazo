@@ -1,6 +1,6 @@
-# Merch Festivalazo 2026
+# Merch Festivalazo
 
-Stock y ventas de remeras, buzos, tops, gorras y shorts del Festivalazo 2026.
+Stock y ventas de remeras, buzos, tops, gorras y shorts del Festivalazo.
 
 - App: https://festivalazo.github.io/merch-festivalazo-2026/
 - Datos: Supabase, proyecto "Merch Festivalazo" (qfnaodezkfxplhnfngos). Esquema en `supabase/001_esquema.sql`.

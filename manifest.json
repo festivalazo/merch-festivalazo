@@ -1,7 +1,7 @@
 {
-  "name": "Merch Festivalazo 2026",
+  "name": "Merch Festivalazo",
   "short_name": "Merch Festi",
-  "description": "Stock y ventas de remeras y ropa del Festivalazo 2026",
+  "description": "Stock y ventas de remeras y ropa del Festivalazo",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
