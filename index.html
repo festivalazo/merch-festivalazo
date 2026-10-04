@@ -47,9 +47,11 @@ h1,h2,h3{margin:0}
 /* Layout */
 header{position:sticky;top:0;z-index:20;background:var(--bar);color:#fff;border-bottom:1px solid var(--line);padding:calc(8px + env(safe-area-inset-top)) 16px 8px;display:flex;align-items:center;gap:10px}
 header .logo{width:38px;height:38px;border-radius:50%;object-fit:cover;border:1.5px solid #ffffff30;flex:0 0 38px}
-header h1{font-size:clamp(19px,6vw,26px);line-height:1;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.htitle{flex:1;min-width:0;display:flex;flex-direction:column;align-items:flex-start;gap:3px}
+header h1{font-size:clamp(21px,6.4vw,26px);line-height:1;max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.menu-btn{display:flex;align-items:center;gap:6px;background:var(--brand);color:var(--brand-ink);border:0;border-radius:12px;padding:9px 12px;font-weight:800;font-size:14px;flex:0 0 auto}
 header h1 span{color:var(--brand)}
-.chip-user{background:#ffffff14;border:1px solid #ffffff22 !important;border:0;color:#fff;border-radius:999px;padding:7px 12px;font-size:14px;font-weight:600;white-space:nowrap;max-width:34vw;overflow:hidden;text-overflow:ellipsis}
+.chip-user{background:transparent;border:0;color:var(--muted);padding:0;font-size:12px;font-weight:600;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis}
 .icon-btn{background:transparent;border:0;color:inherit;padding:6px;border-radius:10px;display:inline-flex}
 main{max-width:860px;margin:0 auto;padding:12px 16px calc(96px + env(safe-area-inset-bottom))}
 nav.tabs{position:fixed;bottom:0;left:0;right:0;z-index:20;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
@@ -89,7 +91,7 @@ label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin
 @media (min-width:640px){.grid{grid-template-columns:1fr 1fr}}
 .prod{display:flex;gap:12px;padding:12px}
 .prod.agotado{opacity:.6}
-.thumb{width:76px;height:76px;flex:0 0 76px;border-radius:12px;background:var(--bg);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--muted);border:0;padding:0;overflow:hidden}
+.thumb{width:64px;height:64px;flex:0 0 64px;border-radius:12px;background:var(--bg);object-fit:cover;display:flex;align-items:center;justify-content:center;color:var(--muted);border:0;padding:0;overflow:hidden}
 .thumb img{width:100%;height:100%;object-fit:cover}
 .prod-body{flex:1;min-width:0}
 .prod-head{display:flex;gap:6px;align-items:flex-start}
@@ -97,7 +99,7 @@ label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin
 .prod-sub{font-size:13px;color:var(--muted);margin:2px 0 8px}
 .prod-sub b{color:var(--ink)}
 .sizes{display:flex;flex-wrap:wrap;gap:6px}
-.size{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:5px 8px;min-width:50px;text-align:center;line-height:1.15}
+.size{border:1.5px solid var(--line);background:var(--bg);border-radius:10px;padding:5px 6px;min-width:44px;text-align:center;line-height:1.15}
 .size b{display:block;font-size:14px}
 .size span{font-size:12px;color:var(--muted);font-variant-numeric:tabular-nums}
 .size.low{border-color:var(--warn);background:var(--warn-bg)}
@@ -128,6 +130,8 @@ label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin
 /* Resumen */
 .kpis{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
 .kpi{padding:12px}
+.kpi-btn{border:1px solid #a9566b55;text-align:left;color:var(--ink);font:inherit;width:100%}
+.kpi-btn:active{transform:scale(.98)}
 .kpi span{font-size:12px;font-weight:600;color:var(--muted)}
 .kpi b{display:block;font-size:22px;margin-top:2px}
 .kpi.big{grid-column:1/-1;background:linear-gradient(120deg,#2a1219,#151413 70%);border:1px solid #a9566b55;color:#fff}
@@ -208,10 +212,12 @@ td.q0{color:#d33;font-weight:700}
 <div id="app" class="hidden">
   <header>
     <img class="logo" src="img/logo.jpg" alt="">
-    <h1 class="display">Merch <span>Festivalazo</span></h1>
-    <button class="chip-user" id="userChip" title="Cambiar quién vende"></button>
-    <button class="icon-btn" id="menuBtn" aria-label="Menú">
-      <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="5" r="2"/><circle cx="12" cy="12" r="2"/><circle cx="12" cy="19" r="2"/></svg>
+    <div class="htitle">
+      <h1 class="display">Merch <span>Festivalazo</span></h1>
+      <button class="chip-user" id="userChip" title="Cambiar quién vende"></button>
+    </div>
+    <button class="menu-btn" id="menuBtn" aria-label="Menú">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>Menú
     </button>
   </header>
   <div class="offline hidden" id="offline">Sin conexión — los cambios no se guardan hasta que vuelva</div>
@@ -318,7 +324,7 @@ const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p
 function render() {
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#fab').classList.add('hidden');
-  $('#userChip').textContent = vendedor ? '👤 ' + vendedor : '¿Quién vende?';
+  $('#userChip').textContent = vendedor ? 'Vende: ' + vendedor + ' ▾' : '¿Quién vende? ▾';
   ({ stock: renderStock, ventas: renderVentas, resumen: renderResumen })[tab]();
 }
 
@@ -475,7 +481,7 @@ function renderResumen() {
       <div class="card kpi"><span>Stock total cargado</span><b>${r.cargadoU}</b><span class="money">${money(r.cargadoValor)}</span></div>
       <div class="card kpi"><span>Prendas vendidas</span><b>${r.vendidasU}</b></div>
       <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span class="money">${money(r.quedaValor)}</span></div>
-      <div class="card kpi"><span>Regaladas</span><b style="color:var(--gift)">${r.rgU}</b><span class="money">${money(r.rgValor)}</span></div>
+      <button class="card kpi kpi-btn" id="kpiRegalos" title="${esc(destinatariosPrevios().join(', ') || 'Sin regalos todavía')}"><span>Regaladas · ver a quién ›</span><b style="color:var(--gift)">${r.rgU}</b><span class="money">${money(r.rgValor)}</span></button>
     </div>
     <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
 
@@ -498,6 +504,7 @@ function renderResumen() {
     </table></div>`;
   $('#excel').onclick = descargarExcel;
   $('#volver').onclick = () => { tab = 'stock'; render(); window.scrollTo(0, 0); };
+  $('#kpiRegalos').onclick = verRegalos;
 }
 
 // ---------- Venta ----------
@@ -530,7 +537,12 @@ function abrirVenta(key, preId) {
     <div class="pay-btns big">
       ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.txt}</button>`).join('')}
     </div>
-    <input class="input" id="nota" maxlength="120" placeholder="Nota opcional (ej: regalo a la banda)" style="margin-top:10px;font-size:14px;padding:10px">
+    <div id="regaloBox" class="hidden">
+      <div class="step-lbl" style="color:var(--gift)">🎁 ¿A quién se lo regalás?</div>
+      ${destinatariosPrevios().length ? `<div class="chips" style="flex-wrap:wrap">${destinatariosPrevios().map(n => `<button class="chip" data-dest="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
+      <input class="input" id="nota" maxlength="120" placeholder="Nombre o motivo (ej: banda, staff, sorteo)">
+      <button class="btn" id="okRegalo" style="width:100%;margin-top:10px;background:var(--mauve);color:#fff">Registrar regalo</button>
+    </div>
     <button class="btn sec" style="width:100%;margin-top:10px" data-close>Cancelar</button>
   `);
   const upd = () => {
@@ -545,24 +557,60 @@ function abrirVenta(key, preId) {
   $('#menos').onclick = () => { $('#cant').value = cant - 1; upd(); };
   $('#mas').onclick = () => { $('#cant').value = cant + 1; upd(); };
   $('#cant').onchange = upd;
-  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = async () => {
+  const registrar = async (forma, b, nota) => {
     if (!sel || guardando) return;
     guardando = true; upd();
-    const forma = b.dataset.pay;
+    const txt = b.innerHTML;
     b.innerHTML = 'Guardando…';
     const { data, error } = await sb.rpc('vender', {
-      p_prenda: sel.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor, p_nota: $('#nota').value || null,
+      p_prenda: sel.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor, p_nota: nota || null,
     });
     if (error) {
-      guardando = false; b.innerHTML = FORMAS[forma].icon + FORMAS[forma].txt; upd();
+      guardando = false; b.innerHTML = txt; upd();
       toast(error.message.replace(/^.*?: /, '')); return;
     }
     cerrarModal();
     const detalle = `${cant > 1 ? cant + '× ' : ''}${base.modelo} ${sel.talle}`;
-    toast(forma === 'regalo' ? `🎁 Regalo · ${detalle}` : `✓ ${detalle} · ${money(sel.precio * cant)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anular(data, true));
+    toast(forma === 'regalo' ? `🎁 ${detalle}${nota ? ' → ' + nota : ''}` : `✓ ${detalle} · ${money(sel.precio * cant)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anular(data, true));
     cargar();
+  };
+  // Efectivo / Transferencia se registran al tocar; Regalo pide a quién
+  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => {
+    if (!sel || guardando) return;
+    if (b.dataset.pay !== 'regalo') return registrar(b.dataset.pay, b);
+    document.querySelectorAll('[data-pay]').forEach(x => x.classList.toggle('on', x === b));
+    $('#regaloBox').classList.remove('hidden');
+    setTimeout(() => { $('#nota').focus(); $('#regaloBox').scrollIntoView({ block: 'nearest' }); }, 50);
   });
+  document.querySelectorAll('[data-dest]').forEach(c => c.onclick = () => { $('#nota').value = c.dataset.dest; });
+  $('#okRegalo').onclick = () => registrar('regalo', $('#okRegalo'), $('#nota').value.trim());
+  $('#nota').onkeydown = e => { if (e.key === 'Enter') $('#okRegalo').click(); };
   upd();
+}
+
+// A quiénes ya se regaló (para elegir rápido)
+function destinatariosPrevios() {
+  const vistos = new Set();
+  for (const v of ventas) if (v.forma_pago === 'regalo' && !v.anulada && v.nota) vistos.add(v.nota);
+  return [...vistos].slice(0, 8);
+}
+
+function verRegalos() {
+  const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
+  const regalos = ventas.filter(v => v.forma_pago === 'regalo' && !v.anulada);
+  const total = regalos.reduce((s, v) => s + v.cantidad * Number(porId[v.prenda_id]?.precio || 0), 0);
+  modal(`
+    <h2 class="display" style="color:var(--gift)">🎁 Regalos</h2>
+    <p class="muted small">${(n => n + (n === 1 ? ' prenda' : ' prendas'))(regalos.reduce((s, v) => s + v.cantidad, 0))} · ${money(total)} a precio de venta</p>
+    ${regalos.length ? `<div class="card" style="box-shadow:none;border:1.5px solid var(--line)">${regalos.map(v => {
+      const p = porId[v.prenda_id] || {};
+      return `<div class="sale">
+        <div class="what"><b>${esc(v.nota || 'Sin nombre')}</b>
+          <span>${v.cantidad > 1 ? v.cantidad + '× ' : ''}${esc(p.modelo || '')} ${esc(p.talle || '')} · dio ${esc(v.vendedor || '—')} · ${new Date(v.creado).toLocaleString('es-AR', { day: 'numeric', month: 'numeric', hour: '2-digit', minute: '2-digit' })}</span></div>
+      </div>`;
+    }).join('')}</div>` : '<p class="muted">Todavía no hay regalos.</p>'}
+    <button class="btn sec" style="width:100%;margin-top:12px" data-close>Cerrar</button>
+  `);
 }
 
 async function anular(id, valor) {
