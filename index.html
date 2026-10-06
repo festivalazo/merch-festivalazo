@@ -116,6 +116,17 @@ label.lbl{display:block;font-size:13px;font-weight:600;color:var(--muted);margin
 .p-efectivo{background:var(--ok-bg);color:var(--ok)}
 .p-transferencia{background:var(--transf-bg);color:var(--transf)}
 .p-regalo{background:var(--gift-bg);color:var(--gift)}
+.p-mixto{background:var(--warn-bg);color:var(--brand)}
+.cartbar{position:fixed;left:8px;right:8px;bottom:calc(66px + env(safe-area-inset-bottom));z-index:22;border:1.5px solid var(--brand);background:#1f1606;color:var(--ink);border-radius:14px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:14px;box-shadow:0 8px 24px rgba(0,0,0,.6);text-align:left}
+.cartbar .cobrar{background:var(--brand);color:var(--brand-ink);border-radius:10px;padding:8px 12px;font-weight:800;white-space:nowrap}
+body.con-carrito main{padding-bottom:calc(160px + env(safe-area-inset-bottom))}
+body.con-carrito .toast{bottom:calc(150px + env(safe-area-inset-bottom))}
+.en-curso{background:#1f1606;border:1px solid #e9a23b66;color:var(--ink);border-radius:12px;padding:10px 12px;font-size:13px;margin-bottom:6px}
+.pago-extra{margin-top:4px}
+.agregar{width:100%;margin-top:10px;background:transparent;color:var(--brand);border:1.5px dashed var(--brand)}
+.lista-compra{padding:4px 12px;box-shadow:none;border:1.5px solid var(--line)}
+.lista-compra .persona-item:first-child{border-top:0}
+.mx-tr{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap}
 .sale{display:flex;gap:10px;align-items:center;padding:11px 12px;border-bottom:1px solid var(--line)}
 .sale:last-child{border-bottom:0}
 .sale .when{font-size:12px;color:var(--muted);width:42px;flex:0 0 42px;font-variant-numeric:tabular-nums}
@@ -164,7 +175,7 @@ td.q0{color:#d33;font-weight:700}
 .stepper{display:flex;align-items:center;gap:0;border:1.5px solid var(--line);border-radius:12px;overflow:hidden}
 .stepper button{border:0;background:var(--bg);width:48px;height:46px;font-size:22px;font-weight:700}
 .stepper input{width:56px;text-align:center;border:0;background:transparent;font-size:18px;font-weight:700}
-.pay-btns{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px}
+.pay-btns{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;gap:8px;margin-top:14px}
 .pay{border:2px solid transparent;border-radius:14px;padding:12px 4px;font-weight:700;font-size:14px;display:flex;flex-direction:column;align-items:center;gap:4px}
 .pay svg{width:26px;height:26px}
 .pay.on{border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
@@ -180,7 +191,7 @@ td.q0{color:#d33;font-weight:700}
 .tb.on b{color:var(--brand)}
 .tb:disabled{opacity:.35}
 .pay-btns.big{margin-top:0}
-.pay-btns.big .pay{padding:18px 4px;font-size:15px}
+.pay-btns.big .pay{padding:16px 2px;font-size:14px}
 .pay-btns.big .pay svg{width:30px;height:30px}
 .pay:disabled{opacity:.35}
 .stepper.mini button{width:36px;height:34px;font-size:18px}
@@ -231,6 +242,7 @@ td.q0{color:#d33;font-weight:700}
   <button class="fab" id="fab" aria-label="Agregar prenda">
     <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
   </button>
+  <button class="cartbar hidden" id="cartbar"></button>
   <nav class="tabs">
     <button data-tab="stock" class="on">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M8 3 4 6l2 4 2-1v12h8V9l2 1 2-4-4-3c0 2-1.8 3-4 3s-4-1-4-3Z"/></svg>Stock</button>
@@ -249,9 +261,10 @@ const CATEGORIAS = ['Remeras', 'Tops', 'Shorts', 'Buzos', 'Camperas', 'Gorras'];
 const TALLES_ROPA = ['XS', 'S', 'M', 'L', 'XL', 'XXL'];
 const ORDEN_TALLES = ['XXS','XS','S','M','L','XL','XXL','XXXL','ÚNICO'];
 const FORMAS = {
-  efectivo: { txt: 'Efectivo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>' },
-  transferencia: { txt: 'Transferencia', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>' },
-  regalo: { txt: 'Regalo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12M12 9S10 4 7.5 4 5 7 7 8.5 12 9 12 9Zm0 0s2-5 4.5-5S19 7 17 8.5 12 9 12 9Z"/></svg>' },
+  efectivo: { txt: 'Efectivo', corto: 'Efectivo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/></svg>' },
+  transferencia: { txt: 'Transferencia', corto: 'Transf.', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8h14l-3-3M20 16H6l3 3"/></svg>' },
+  mixto: { txt: 'Mixto', corto: 'Mixto', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="11" height="12" rx="2"/><path d="M15 9h7l-2-2M22 15h-7l2 2"/></svg>' },
+  regalo: { txt: 'Regalo', corto: 'Regalo', icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="9" width="18" height="12" rx="1"/><path d="M3 13h18M12 9v12M12 9S10 4 7.5 4 5 7 7 8.5 12 9 12 9Zm0 0s2-5 4.5-5S19 7 17 8.5 12 9 12 9Z"/></svg>' },
 };
 
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: true, autoRefreshToken: true } });
@@ -288,7 +301,7 @@ function vendidoPorPrenda() {
     if (v.anulada) continue;
     const x = m[v.prenda_id] ||= { vendido: 0, regalado: 0, cobrado: 0 };
     x.vendido += v.cantidad;
-    if (v.forma_pago === 'regalo') x.regalado += v.cantidad; else x.cobrado += Number(v.total);
+    if (v.forma_pago === 'regalo') x.regalado += v.cantidad; else x.cobrado += Number(v.efectivo) + Number(v.transferencia);
   }
   return m;
 }
@@ -330,6 +343,7 @@ const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p
 function render() {
   document.querySelectorAll('nav.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === tab));
   $('#fab').classList.add('hidden');
+  pintarCarrito();
   $('#userChip').textContent = vendedor ? 'Vende: ' + vendedor + ' ▾' : '¿Quién vende? ▾';
   ({ stock: renderStock, ventas: renderVentas, resumen: renderResumen })[tab]();
 }
@@ -401,13 +415,13 @@ function renderStock() {
 function renderVentas() {
   const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
   const vendedores = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
-  const lista = ventas.filter(v =>
-    (filtros.forma === 'todas' || v.forma_pago === filtros.forma) &&
-    (filtros.vendedor === 'todos' || v.vendedor === filtros.vendedor));
+  const lista = agruparCompras(ventas).filter(c =>
+    (filtros.forma === 'todas' || c.forma === filtros.forma) &&
+    (filtros.vendedor === 'todos' || c.vendedor === filtros.vendedor));
 
   let html = `
     <div class="chips">
-      ${[['todas', 'Todas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['regalo', 'Regalos']].map(([k, t]) =>
+      ${[['todas', 'Todas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['mixto', 'Mixto'], ['regalo', 'Regalos']].map(([k, t]) =>
         `<button class="chip ${filtros.forma === k ? 'on' : ''}" data-forma="${k}">${t}</button>`).join('')}
     </div>
     ${vendedores.length > 1 ? `<div class="chips">${['todos', ...vendedores].map(n =>
@@ -416,21 +430,23 @@ function renderVentas() {
   if (!lista.length) html += `<div class="empty">Todavía no hay ventas${filtros.forma !== 'todas' || filtros.vendedor !== 'todos' ? ' con este filtro' : ''}.</div>`;
   let dia = '';
   let abierto = false;
-  for (const v of lista) {
-    const d = new Date(v.creado);
+  for (const c of lista) {
+    const d = new Date(c.creado);
     const dk = d.toLocaleDateString('es-AR', { weekday: 'long', day: 'numeric', month: 'long' });
     if (dk !== dia) { if (abierto) html += `</div>`; html += `<div class="day">${dk}</div><div class="card">`; dia = dk; abierto = true; }
-    const p = porId[v.prenda_id] || {};
+    const prendasTxt = c.filas.map(v => { const p = porId[v.prenda_id] || {}; return `${v.cantidad > 1 ? v.cantidad + '× ' : ''}${p.modelo || '¿?'} · ${p.talle || ''}`; });
     html += `
-      <div class="sale ${v.anulada ? 'anulada' : ''}" data-venta="${v.id}">
+      <div class="sale ${c.anulada ? 'anulada' : ''}" data-compra="${esc(c.key)}">
         <div class="when">${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
         <div class="what">
-          <b>${v.cantidad > 1 ? v.cantidad + '× ' : ''}${esc(p.modelo || '¿?')} · ${esc(p.talle || '')}</b>
-          <span>${[p.color, v.vendedor && '👤 ' + v.vendedor, v.nota && '“' + v.nota + '”', v.anulada && 'ANULADA'].filter(Boolean).map(esc).join(' · ')}</span>
+          ${c.filas.length > 1 ? `<span style="color:var(--brand);font-weight:700">🛍 Compra · ${plural(c.unidades, 'prenda')}</span>` : ''}
+          <b>${prendasTxt.map(esc).join('<br>')}</b>
+          <span>${[c.vendedor && '👤 ' + c.vendedor, c.nota && '“' + c.nota + '”', c.anulada && 'ANULADA'].filter(Boolean).map(esc).join(' · ')}</span>
         </div>
         <div style="text-align:right">
-          <div class="money" style="font-weight:700">${v.forma_pago === 'regalo' ? '—' : money(v.total)}</div>
-          <span class="badge p-${v.forma_pago}">${FORMAS[v.forma_pago].txt}</span>
+          <div class="money" style="font-weight:700">${c.forma === 'regalo' ? '—' : money(c.total)}</div>
+          <span class="badge p-${c.forma}">${FORMAS[c.forma].corto}</span>
+          ${c.forma === 'mixto' ? `<div class="mx-tr">ef ${money(c.efectivo)}<br>tr ${money(c.transferencia)}</div>` : ''}
         </div>
       </div>`;
   }
@@ -438,15 +454,15 @@ function renderVentas() {
   $('#view').innerHTML = html;
   document.querySelectorAll('[data-forma]').forEach(b => b.onclick = () => { filtros.forma = b.dataset.forma; renderVentas(); });
   document.querySelectorAll('[data-vend]').forEach(b => b.onclick = () => { filtros.vendedor = b.dataset.vend; renderVentas(); });
-  document.querySelectorAll('[data-venta]').forEach(el => el.onclick = () => abrirDetalleVenta(Number(el.dataset.venta)));
+  document.querySelectorAll('[data-compra]').forEach(el => el.onclick = () => abrirDetalleCompra(el.dataset.compra));
 }
 
 function resumenDatos() {
   const st = conStock();
   const porId = Object.fromEntries(st.map(p => [p.id, p]));
   const act = ventas.filter(v => !v.anulada);
-  const ef = act.filter(v => v.forma_pago === 'efectivo').reduce((s, v) => s + Number(v.total), 0);
-  const tr = act.filter(v => v.forma_pago === 'transferencia').reduce((s, v) => s + Number(v.total), 0);
+  const ef = act.reduce((s, v) => s + Number(v.efectivo), 0);
+  const tr = act.reduce((s, v) => s + Number(v.transferencia), 0);
   const regalos = act.filter(v => v.forma_pago === 'regalo');
   const rgU = regalos.reduce((s, v) => s + v.cantidad, 0);
   const rgValor = regalos.reduce((s, v) => s + v.cantidad * Number(porId[v.prenda_id]?.precio || 0), 0);
@@ -458,7 +474,8 @@ function resumenDatos() {
   for (const v of act) {
     const k = v.vendedor || '(sin nombre)';
     const x = porVend[k] ||= { unidades: 0, efectivo: 0, transferencia: 0, regalos: 0, items: {} };
-    if (v.forma_pago === 'regalo') x.regalos += v.cantidad; else { x.unidades += v.cantidad; x[v.forma_pago] += Number(v.total); }
+    if (v.forma_pago === 'regalo') x.regalos += v.cantidad; else x.unidades += v.cantidad;
+    x.efectivo += Number(v.efectivo); x.transferencia += Number(v.transferencia);
     // Detalle: misma prenda y talle con la misma forma de pago se agrupan
     const p = porId[v.prenda_id] || {};
     const ik = [v.prenda_id, v.forma_pago, v.forma_pago === 'regalo' ? v.nota || '' : ''].join('|');
@@ -528,84 +545,202 @@ function renderResumen() {
 }
 
 // ---------- Venta ----------
-// 3 toques: VENDER → talle → forma de pago (se registra al tocar; DESHACER por si acaso)
+// Compra en curso: varias prendas para la misma persona, se cobran juntas
+let carrito = [];
+try { carrito = JSON.parse(ls.get('mf_carrito', '[]')) || []; } catch { carrito = []; }
+function guardarCarrito() { ls.set('mf_carrito', JSON.stringify(carrito)); pintarCarrito(); }
+const enCarrito = id => carrito.filter(c => c.prenda_id === id).reduce((s, c) => s + c.cant, 0);
+function itemsCarrito() {
+  const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
+  return carrito.map((c, idx) => ({ ...c, idx, p: porId[c.prenda_id] })).filter(c => c.p);
+}
+const totalItems = items => items.reduce((s, i) => s + Number(i.p.precio) * i.cant, 0);
+const contar = items => items.reduce((s, i) => s + i.cant, 0);
+const plural = (n, s) => `${n} ${s}${n === 1 ? '' : 's'}`;
+
+function pintarCarrito() {
+  const items = itemsCarrito();
+  const bar = $('#cartbar');
+  bar.classList.toggle('hidden', !items.length);
+  document.body.classList.toggle('con-carrito', items.length > 0);
+  if (items.length) bar.innerHTML = `<span>🛍 <b>Compra en curso</b><br>${plural(contar(items), 'prenda')} · <b class="money">${money(totalItems(items))}</b></span><span class="cobrar">Cobrar ›</span>`;
+}
+
+// Botones de pago compartidos (venta de una prenda y cobro de la compra).
+// Efectivo / Transf. registran al tocar; Mixto pide cuánto en cada uno; Regalo pide a quién.
+function pagoHTML() {
+  return `
+    <div class="pay-btns big">
+      ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.corto}</button>`).join('')}
+    </div>
+    <div id="mixtoBox" class="hidden pago-extra">
+      <div class="step-lbl" style="color:var(--brand)">Pago mixto · total <span class="money" id="mxTotal"></span></div>
+      <div class="row" style="gap:8px;align-items:flex-start">
+        <label style="flex:1"><span class="small" style="color:var(--ok);font-weight:600">Efectivo $</span><input class="input" id="mxEf" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></label>
+        <label style="flex:1"><span class="small" style="color:var(--transf);font-weight:600">Transferencia $</span><input class="input" id="mxTr" type="number" inputmode="numeric" min="0" step="1" placeholder="0"></label>
+      </div>
+      <p class="small muted" style="margin:6px 0 0">Poné uno y el otro se completa solo.</p>
+      <button class="btn" id="okMixto" style="width:100%;margin-top:10px" disabled>Completá cuánto paga en cada uno</button>
+    </div>
+    <div id="regaloBox" class="hidden pago-extra">
+      <div class="step-lbl" style="color:var(--gift)">🎁 ¿A quién se lo regalás?</div>
+      ${destinatariosPrevios().length ? `<div class="chips" style="flex-wrap:wrap">${destinatariosPrevios().map(n => `<button class="chip" data-dest="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
+      <input class="input" id="nota" maxlength="120" placeholder="Nombre o motivo (ej: banda, staff, sorteo)">
+      <button class="btn" id="okRegalo" style="width:100%;margin-top:10px;background:var(--mauve);color:#fff">Registrar regalo</button>
+    </div>`;
+}
+function bindPago(obtener) {
+  let guardando = false;
+  const habilitar = () => {
+    const vacio = !obtener().length;
+    document.querySelectorAll('[data-pay]').forEach(b => b.disabled = guardando || vacio);
+    $('#okRegalo').disabled = guardando || vacio;
+    actualizarMixto();
+  };
+  const actualizarMixto = desde => {
+    const total = totalItems(obtener());
+    $('#mxTotal').textContent = money(total);
+    const ef = $('#mxEf'), tr = $('#mxTr');
+    if (desde === 'ef') tr.value = ef.value === '' ? '' : Math.max(0, total - Number(ef.value));
+    if (desde === 'tr') ef.value = tr.value === '' ? '' : Math.max(0, total - Number(tr.value));
+    const e = Number(ef.value), t = Number(tr.value);
+    const ok = ef.value !== '' && tr.value !== '' && e >= 0 && t >= 0 && e + t === total && total > 0;
+    $('#okMixto').disabled = !ok || guardando;
+    $('#okMixto').textContent = ok ? `Registrar · ${money(e)} efectivo + ${money(t)} transf.` : 'Completá cuánto paga en cada uno';
+  };
+  const registrar = async (forma, btn, efectivo, nota) => {
+    const items = obtener();
+    if (!items.length || guardando) return;
+    guardando = true; habilitar();
+    const txt = btn.innerHTML;
+    btn.innerHTML = 'Guardando…';
+    const { data, error } = await sb.rpc('vender_compra', {
+      p_items: items.map(i => ({ prenda: i.prenda_id, cantidad: i.cant })),
+      p_forma: forma, p_efectivo: efectivo || 0, p_vendedor: vendedor, p_nota: nota || null,
+    });
+    if (error) {
+      guardando = false; btn.innerHTML = txt; habilitar();
+      toast(error.message.replace(/^.*?: /, '')); return;
+    }
+    carrito = []; guardarCarrito();
+    cerrarModal();
+    const total = totalItems(items);
+    const detalle = contar(items) === 1 ? `${items[0].p.modelo} ${items[0].p.talle}` : plural(contar(items), 'prenda');
+    toast(forma === 'regalo' ? `🎁 ${detalle}${nota ? ' → ' + nota : ''}`
+      : forma === 'mixto' ? `✓ ${detalle} · ${money(efectivo)} efectivo + ${money(total - efectivo)} transf.`
+      : `✓ ${detalle} · ${money(total)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anularCompra(data, true));
+    cargar();
+  };
+  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => {
+    if (guardando || !obtener().length) return;
+    const f = b.dataset.pay;
+    if (f === 'efectivo' || f === 'transferencia') return registrar(f, b);
+    document.querySelectorAll('[data-pay]').forEach(x => x.classList.toggle('on', x === b));
+    $('#mixtoBox').classList.toggle('hidden', f !== 'mixto');
+    $('#regaloBox').classList.toggle('hidden', f !== 'regalo');
+    const foco = f === 'mixto' ? '#mxEf' : '#nota';
+    setTimeout(() => { $(foco).focus(); $('#' + f + 'Box').scrollIntoView({ block: 'nearest' }); }, 50);
+    actualizarMixto();
+  });
+  $('#mxEf').oninput = () => actualizarMixto('ef');
+  $('#mxTr').oninput = () => actualizarMixto('tr');
+  $('#okMixto').onclick = () => registrar('mixto', $('#okMixto'), Number($('#mxEf').value));
+  document.querySelectorAll('[data-dest]').forEach(c => c.onclick = () => { $('#nota').value = c.dataset.dest; });
+  $('#okRegalo').onclick = () => registrar('regalo', $('#okRegalo'), 0, $('#nota').value.trim());
+  $('#nota').onkeydown = e => { if (e.key === 'Enter') $('#okRegalo').click(); };
+  habilitar();
+  return { actualizar: habilitar };
+}
+
+// VENDER → talle → forma de pago (o "Agregar otra prenda" para armar una compra)
 function abrirVenta(key, preId) {
-  const items = conStock().filter(p => grupoKey(p) === key && p.activo).sort((a, b) => ordenTalle(a.talle, b.talle));
-  if (!items.some(i => i.queda > 0)) return;
+  const items = conStock().filter(p => grupoKey(p) === key && p.activo)
+    .map(i => ({ ...i, disp: i.queda - enCarrito(i.id) }))
+    .sort((a, b) => ordenTalle(a.talle, b.talle));
+  if (!items.some(i => i.disp > 0)) { if (items.some(i => i.queda > 0)) toast('Ya está todo en la compra en curso'); return; }
   if (!vendedor) { pedirVendedor(() => abrirVenta(key, preId)); return; }
   const base = items[0];
-  const conStk = items.filter(i => i.queda > 0);
-  let sel = items.find(i => i.id === preId && i.queda > 0) || (conStk.length === 1 ? conStk[0] : null);
-  let cant = 1, guardando = false;
+  const conStk = items.filter(i => i.disp > 0);
+  let sel = items.find(i => i.id === preId && i.disp > 0) || (conStk.length === 1 ? conStk[0] : null);
+  let cant = 1;
+  const previo = itemsCarrito();
   const foto = items.find(i => i.foto_url)?.foto_url;
   modal(`
     <div class="sell-top">
       <div class="thumb">${foto ? `<img src="${esc(foto)}" alt="">` : iconCam()}</div>
       <div>
         <h2 class="display">${esc(base.modelo)}</h2>
-        <div class="muted small">${esc(base.categoria)}${base.color ? ' · ' + esc(base.color) : ''}</div>
+        <div class="muted small">${esc(base.categoria)}${base.color ? ' · ' + esc(base.color) : ''} · <b class="money" style="color:var(--ink)">${money(base.precio)}</b></div>
       </div>
     </div>
+    ${previo.length ? `<div class="en-curso">🛍 <b>Compra en curso:</b> ${plural(contar(previo), 'prenda')} · ${money(totalItems(previo))}. Esta se suma a la misma compra.</div>` : ''}
     <div class="step-lbl">1 · Talle</div>
     <div class="talles-big">
-      ${items.map(i => `<button class="tb" data-t="${i.id}" ${i.queda <= 0 ? 'disabled' : ''}><b>${esc(i.talle)}</b><span>${i.queda <= 0 ? 'agotado' : 'quedan ' + i.queda}</span></button>`).join('')}
+      ${items.map(i => `<button class="tb" data-t="${i.id}" ${i.disp <= 0 ? 'disabled' : ''}><b>${esc(i.talle)}</b><span>${i.disp <= 0 ? 'agotado' : 'quedan ' + i.disp}</span></button>`).join('')}
     </div>
     <div class="step-lbl row" style="justify-content:space-between">
       <span>2 · Cómo paga <span class="money" id="tot" style="color:var(--ink)"></span></span>
       <div class="stepper mini"><button id="menos" aria-label="Menos">−</button><input id="cant" inputmode="numeric" value="1" aria-label="Cantidad"><button id="mas" aria-label="Más">+</button></div>
     </div>
-    <div class="pay-btns big">
-      ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.txt}</button>`).join('')}
-    </div>
-    <div id="regaloBox" class="hidden">
-      <div class="step-lbl" style="color:var(--gift)">🎁 ¿A quién se lo regalás?</div>
-      ${destinatariosPrevios().length ? `<div class="chips" style="flex-wrap:wrap">${destinatariosPrevios().map(n => `<button class="chip" data-dest="${esc(n)}">${esc(n)}</button>`).join('')}</div>` : ''}
-      <input class="input" id="nota" maxlength="120" placeholder="Nombre o motivo (ej: banda, staff, sorteo)">
-      <button class="btn" id="okRegalo" style="width:100%;margin-top:10px;background:var(--mauve);color:#fff">Registrar regalo</button>
-    </div>
-    <button class="btn sec" style="width:100%;margin-top:10px" data-close>Cancelar</button>
+    ${pagoHTML()}
+    <button class="btn agregar" id="agregar">＋ Agregar otra prenda a esta compra</button>
+    <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cancelar</button>
   `);
+  const actuales = () => sel ? [...previo, { prenda_id: sel.id, cant, p: sel }] : [];
+  const pago = bindPago(actuales);
   const upd = () => {
-    const max = sel ? sel.queda : 1;
-    cant = Math.max(1, Math.min(max, parseInt($('#cant').value) || 1));
+    cant = Math.max(1, Math.min(sel ? sel.disp : 1, parseInt($('#cant').value) || 1));
     $('#cant').value = cant;
     document.querySelectorAll('[data-t]').forEach(b => b.classList.toggle('on', sel && Number(b.dataset.t) === sel.id));
-    document.querySelectorAll('[data-pay]').forEach(b => b.disabled = !sel || guardando);
-    $('#tot').textContent = sel ? '· ' + money(sel.precio * cant) : '';
+    $('#tot').textContent = sel ? `· ${previo.length ? 'total compra ' : ''}${money(totalItems(actuales()))}` : '';
+    $('#agregar').disabled = !sel;
+    pago.actualizar();
   };
   document.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { sel = items.find(i => i.id === Number(b.dataset.t)); upd(); });
   $('#menos').onclick = () => { $('#cant').value = cant - 1; upd(); };
   $('#mas').onclick = () => { $('#cant').value = cant + 1; upd(); };
   $('#cant').onchange = upd;
-  const registrar = async (forma, b, nota) => {
-    if (!sel || guardando) return;
-    guardando = true; upd();
-    const txt = b.innerHTML;
-    b.innerHTML = 'Guardando…';
-    const { data, error } = await sb.rpc('vender', {
-      p_prenda: sel.id, p_cantidad: cant, p_forma: forma, p_vendedor: vendedor, p_nota: nota || null,
-    });
-    if (error) {
-      guardando = false; b.innerHTML = txt; upd();
-      toast(error.message.replace(/^.*?: /, '')); return;
-    }
+  $('#agregar').onclick = () => {
+    if (!sel) return;
+    carrito.push({ prenda_id: sel.id, cant });
+    guardarCarrito();
     cerrarModal();
-    const detalle = `${cant > 1 ? cant + '× ' : ''}${base.modelo} ${sel.talle}`;
-    toast(forma === 'regalo' ? `🎁 ${detalle}${nota ? ' → ' + nota : ''}` : `✓ ${detalle} · ${money(sel.precio * cant)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anular(data, true));
-    cargar();
+    toast(`🛍 ${base.modelo} ${sel.talle} agregada — tocá VENDER en la próxima prenda`);
+    render();
   };
-  // Efectivo / Transferencia se registran al tocar; Regalo pide a quién
-  document.querySelectorAll('[data-pay]').forEach(b => b.onclick = () => {
-    if (!sel || guardando) return;
-    if (b.dataset.pay !== 'regalo') return registrar(b.dataset.pay, b);
-    document.querySelectorAll('[data-pay]').forEach(x => x.classList.toggle('on', x === b));
-    $('#regaloBox').classList.remove('hidden');
-    setTimeout(() => { $('#nota').focus(); $('#regaloBox').scrollIntoView({ block: 'nearest' }); }, 50);
-  });
-  document.querySelectorAll('[data-dest]').forEach(c => c.onclick = () => { $('#nota').value = c.dataset.dest; });
-  $('#okRegalo').onclick = () => registrar('regalo', $('#okRegalo'), $('#nota').value.trim());
-  $('#nota').onkeydown = e => { if (e.key === 'Enter') $('#okRegalo').click(); };
   upd();
+}
+
+// Cobrar la compra en curso
+function abrirCobro() {
+  if (!vendedor) { pedirVendedor(abrirCobro); return; }
+  const items = itemsCarrito();
+  if (!items.length) return;
+  modal(`
+    <h2 class="display">🛍 Compra en curso</h2>
+    <div class="card lista-compra" style="margin-top:10px">
+      ${items.map(i => `<div class="persona-item">
+        <span><b>${i.cant}×</b> ${esc(i.p.modelo)} · ${esc(i.p.talle)}</span>
+        <span class="row" style="gap:4px;flex:0 0 auto"><span class="money">${money(i.p.precio * i.cant)}</span>
+          <button class="icon-btn" data-quitar="${i.idx}" aria-label="Quitar" style="color:var(--muted)"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg></button></span>
+      </div>`).join('')}
+    </div>
+    <div class="total-line"><span class="muted">Total</span><b class="money">${money(totalItems(items))}</b></div>
+    <div class="step-lbl" style="margin-top:0">Cómo paga</div>
+    ${pagoHTML()}
+    <button class="btn agregar" id="seguir">＋ Agregar otra prenda</button>
+    <button class="btn danger" id="vaciar" style="width:100%;margin-top:8px">Vaciar compra</button>
+  `);
+  bindPago(itemsCarrito);
+  document.querySelectorAll('[data-quitar]').forEach(b => b.onclick = () => {
+    carrito.splice(Number(b.dataset.quitar), 1); guardarCarrito(); render();
+    carrito.length ? abrirCobro() : cerrarModal();
+  });
+  $('#seguir').onclick = cerrarModal;
+  $('#vaciar').onclick = () => {
+    if (!confirm('¿Vaciar la compra en curso? No se registra nada.')) return;
+    carrito = []; guardarCarrito(); cerrarModal(); render();
+  };
 }
 
 // A quiénes ya se regaló (para elegir rápido)
@@ -633,41 +768,69 @@ function verRegalos() {
   `);
 }
 
-async function anular(id, valor) {
-  const v = ventas.find(x => x.id === id);
-  if (!valor && v) {
-    const p = conStock().find(x => x.id === v.prenda_id);
-    if (p && p.queda < v.cantidad) { toast(`No alcanza el stock para restaurarla (quedan ${p.queda})`); return; }
+// Las filas de una misma compra comparten compra_id
+const compraKey = v => v.compra_id || 'v' + v.id;
+function agruparCompras(lista) {
+  const m = new Map();
+  for (const v of lista) {
+    const k = compraKey(v);
+    if (!m.has(k)) m.set(k, { key: k, filas: [], creado: v.creado, vendedor: v.vendedor, nota: v.nota, forma: v.forma_pago });
+    m.get(k).filas.push(v);
   }
-  const { error } = await sb.from('ventas').update({ anulada: valor }).eq('id', id);
+  for (const c of m.values()) {
+    c.unidades = c.filas.reduce((s, v) => s + v.cantidad, 0);
+    c.total = c.filas.reduce((s, v) => s + Number(v.total), 0);
+    c.efectivo = c.filas.reduce((s, v) => s + Number(v.efectivo), 0);
+    c.transferencia = c.filas.reduce((s, v) => s + Number(v.transferencia), 0);
+    c.anulada = c.filas.every(v => v.anulada);
+  }
+  return [...m.values()];
+}
+
+async function anularCompra(key, valor) {
+  const filas = ventas.filter(v => compraKey(v) === key);
+  if (!valor) {
+    const st = conStock();
+    for (const v of filas) {
+      const p = st.find(x => x.id === v.prenda_id);
+      if (p && p.queda < v.cantidad) { toast(`No alcanza el stock de ${p.modelo} ${p.talle} para restaurarla (quedan ${p.queda})`); return; }
+    }
+  }
+  const q = sb.from('ventas').update({ anulada: valor });
+  const { error } = await (String(key).startsWith('v') ? q.eq('id', Number(key.slice(1))) : q.eq('compra_id', key));
   if (error) { toast('No se pudo: ' + error.message); return; }
   toast(valor ? 'Venta anulada — volvió al stock' : 'Venta restaurada');
   cargar();
 }
 
-function abrirDetalleVenta(id) {
-  const v = ventas.find(x => x.id === id); if (!v) return;
-  const p = prendas.find(x => x.id === v.prenda_id) || {};
-  const d = new Date(v.creado);
+function abrirDetalleCompra(key) {
+  const c = agruparCompras(ventas.filter(v => compraKey(v) === key))[0]; if (!c) return;
+  const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
+  const d = new Date(c.creado);
+  const fila = (a, b) => `<div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">${a}</span>${b}</div>`;
   modal(`
-    <h2 class="display">${esc(p.modelo || 'Venta')}</h2>
-    <p class="muted">${esc(p.categoria || '')}${p.color ? ' · ' + esc(p.color) : ''} · Talle ${esc(p.talle || '')}</p>
-    <div class="card" style="padding:12px;box-shadow:none;border:1.5px solid var(--line)">
-      <div class="row" style="justify-content:space-between"><span class="muted">Cantidad</span><b>${v.cantidad}</b></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Pago</span><span class="badge p-${v.forma_pago}">${FORMAS[v.forma_pago].txt}</span></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Total</span><b class="money">${money(v.total)}</b></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Vendió</span><b>${esc(v.vendedor || '—')}</b></div>
-      <div class="row" style="justify-content:space-between;margin-top:6px"><span class="muted">Cuándo</span><span>${d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span></div>
-      ${v.nota ? `<div style="margin-top:8px">“${esc(v.nota)}”</div>` : ''}
+    <h2 class="display">${c.unidades === 1 ? 'Venta' : 'Compra · ' + plural(c.unidades, 'prenda')}</h2>
+    <div class="card lista-compra" style="margin-top:10px">
+      ${c.filas.map(v => { const p = porId[v.prenda_id] || {}; return `<div class="persona-item">
+        <span><b>${v.cantidad}×</b> ${esc(p.modelo || '¿?')}${p.color ? ' ' + esc(p.color) : ''} · ${esc(p.talle || '')}</span>
+        <span class="money">${c.forma === 'regalo' ? '—' : money(v.total)}</span></div>`; }).join('')}
     </div>
-    ${v.anulada
-      ? `<button class="btn" id="anul" style="width:100%;margin-top:14px">Restaurar venta</button>`
-      : `<button class="btn danger" id="anul" style="width:100%;margin-top:14px">Anular venta (vuelve al stock)</button>`}
+    <div class="card" style="padding:12px;margin-top:10px;box-shadow:none;border:1.5px solid var(--line)">
+      ${fila('Pago', `<span class="badge p-${c.forma}">${FORMAS[c.forma].txt}</span>`)}
+      ${c.forma === 'mixto' ? fila('Efectivo', `<b class="money" style="color:var(--ok)">${money(c.efectivo)}</b>`) + fila('Transferencia', `<b class="money" style="color:var(--transf)">${money(c.transferencia)}</b>`) : ''}
+      ${fila('Total', `<b class="money">${money(c.total)}</b>`)}
+      ${fila('Vendió', `<b>${esc(c.vendedor || '—')}</b>`)}
+      ${fila('Cuándo', `<span>${d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>`)}
+      ${c.nota ? `<div style="margin-top:8px">${c.forma === 'regalo' ? '🎁 ' : ''}“${esc(c.nota)}”</div>` : ''}
+    </div>
+    ${c.anulada
+      ? `<button class="btn" id="anul" style="width:100%;margin-top:14px">Restaurar ${c.unidades === 1 ? 'venta' : 'compra'}</button>`
+      : `<button class="btn danger" id="anul" style="width:100%;margin-top:14px">Anular ${c.unidades === 1 ? 'venta' : 'compra completa'} (vuelve al stock)</button>`}
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
   `);
   $('#anul').onclick = () => {
-    if (!v.anulada && !confirm('¿Anular esta venta? La prenda vuelve al stock.')) return;
-    cerrarModal(); anular(v.id, !v.anulada);
+    if (!c.anulada && !confirm(`¿Anular ${c.unidades === 1 ? 'esta venta' : 'toda esta compra'}? Las prendas vuelven al stock.`)) return;
+    cerrarModal(); anularCompra(c.key, !c.anulada);
   };
 }
 
@@ -844,7 +1007,8 @@ async function descargarExcel() {
     const p = porId[v.prenda_id] || {};
     return {
       Fecha: new Date(v.creado).toLocaleString('es-AR'), Categoría: p.categoria, Modelo: p.modelo, Color: p.color, Talle: p.talle,
-      Cantidad: v.cantidad, Pago: FORMAS[v.forma_pago].txt, 'Precio unit.': Number(v.precio_unit), Total: Number(v.total),
+      Compra: compraKey(v).slice(0, 8), Cantidad: v.cantidad, Pago: FORMAS[v.forma_pago].txt, 'Precio unit.': Number(v.precio_unit), Total: Number(v.total),
+      Efectivo: Number(v.efectivo), Transferencia: Number(v.transferencia),
       Vendió: v.vendedor, Nota: v.nota || '', Anulada: v.anulada ? 'Sí' : '',
     };
   })), 'Ventas');
@@ -961,6 +1125,7 @@ $('#loginForm').onsubmit = async e => {
 };
 document.querySelectorAll('nav.tabs button').forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); window.scrollTo(0, 0); });
 $('#fab').onclick = () => abrirPrenda(null);
+$('#cartbar').onclick = abrirCobro;
 $('#userChip').onclick = () => pedirVendedor();
 $('#menuBtn').onclick = menu;
 const actualizarConexion = () => $('#offline').classList.toggle('hidden', navigator.onLine);
