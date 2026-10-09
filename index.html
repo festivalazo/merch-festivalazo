@@ -181,6 +181,12 @@ td.q0{color:#d33;font-weight:700}
 .pay.on{border-color:currentColor;box-shadow:0 0 0 3px color-mix(in srgb,currentColor 25%,transparent)}
 .vender{display:block;width:100%;margin-top:10px;border:0;border-radius:12px;padding:12px;background:var(--brand);color:var(--brand-ink);font-family:"Bebas Neue",sans-serif;font-size:22px;letter-spacing:.06em;line-height:1}
 .vender:disabled{background:var(--line);color:var(--muted)}
+.vender-row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vender.preventa{background:var(--mauve);color:#fff}
+.pv-pend{font-size:12px;font-weight:700;color:var(--mauve-soft);margin-top:8px}
+.p-preventa{background:#36171f;color:var(--mauve-soft)}
+.p-entregada{background:var(--ok-bg);color:var(--ok)}
+.pay-btns.tres{grid-template-columns:repeat(3,1fr)}
 .vender:active{transform:scale(.98)}
 .step-lbl{font-size:13px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin:14px 0 8px}
 .talles-big{display:grid;grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:8px}
@@ -337,6 +343,8 @@ function grupos(lista) {
   }
   return [...m.values()];
 }
+const pendientesPreventa = g => ventas.filter(v => v.preventa && !v.entregada && !v.anulada && g.items.some(i => i.id === v.prenda_id))
+  .reduce((s, v) => s + v.cantidad, 0);
 const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p.categoria)])];
 
 // ---------- Render ----------
@@ -395,7 +403,11 @@ function renderStock() {
             ${g.items.map(i => `<button class="size ${i.queda <= 0 ? 'zero' : i.queda <= 2 ? 'low' : ''}" data-sell="${i.id}" data-key="${esc(g.key)}" ${i.queda <= 0 ? 'disabled' : ''}>
               <b>${esc(i.talle)}</b><span>${i.queda}/${i.cargado}</span></button>`).join('')}
           </div>
-          <button class="vender" data-vender="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>${g.queda <= 0 ? 'Agotada' : 'Vender'}</button>
+          ${pendientesPreventa(g) ? `<div class="pv-pend">📦 ${plural(pendientesPreventa(g), 'pre venta')} por entregar</div>` : ''}
+          <div class="${g.items.some(i => i.precio_preventa != null) ? 'vender-row' : ''}">
+            <button class="vender" data-vender="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>${g.queda <= 0 ? 'Agotada' : 'Vender'}</button>
+            ${g.items.some(i => i.precio_preventa != null) ? `<button class="vender preventa" data-preventa="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>Pre venta</button>` : ''}
+          </div>
         </div>
       </article>`;
     }
@@ -409,6 +421,7 @@ function renderStock() {
   $('#soloStock').onclick = () => { filtros.soloStock = !filtros.soloStock; renderStock(); };
   document.querySelectorAll('[data-sell]').forEach(b => b.onclick = () => abrirVenta(b.dataset.key, Number(b.dataset.sell)));
   document.querySelectorAll('[data-vender]').forEach(b => b.onclick = () => abrirVenta(b.dataset.vender));
+  document.querySelectorAll('[data-preventa]').forEach(b => b.onclick = () => abrirVenta(b.dataset.preventa, null, true));
   document.querySelectorAll('[data-edit]').forEach(b => b.onclick = () => abrirPrenda(b.dataset.edit));
   document.querySelectorAll('.thumb[data-key]').forEach(b => b.onclick = () => b.dataset.foto ? verFoto(b.dataset.foto) : esSocio() && abrirPrenda(b.dataset.key));
 }
@@ -416,13 +429,15 @@ function renderStock() {
 function renderVentas() {
   const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
   const vendedores = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
-  const lista = agruparCompras(ventas).filter(c =>
-    (filtros.forma === 'todas' || c.forma === filtros.forma) &&
+  const todas = agruparCompras(ventas);
+  const pvPend = todas.filter(c => c.preventa && !c.entregada && !c.anulada).length;
+  const lista = todas.filter(c =>
+    (filtros.forma === 'todas' || (filtros.forma === 'preventa' ? c.preventa : c.forma === filtros.forma)) &&
     (filtros.vendedor === 'todos' || c.vendedor === filtros.vendedor));
 
   let html = `
     <div class="chips">
-      ${[['todas', 'Todas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['mixto', 'Mixto'], ['regalo', 'Regalos']].map(([k, t]) =>
+      ${[['todas', 'Todas'], ['preventa', `📦 Pre ventas${pvPend ? ' (' + pvPend + ' por entregar)' : ''}`], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['mixto', 'Mixto'], ['regalo', 'Regalos']].map(([k, t]) =>
         `<button class="chip ${filtros.forma === k ? 'on' : ''}" data-forma="${k}">${t}</button>`).join('')}
     </div>
     ${vendedores.length > 1 ? `<div class="chips">${['todos', ...vendedores].map(n =>
@@ -440,6 +455,7 @@ function renderVentas() {
       <div class="sale ${c.anulada ? 'anulada' : ''}" data-compra="${esc(c.key)}">
         <div class="when">${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
         <div class="what">
+          ${c.preventa ? `<span style="color:var(--mauve-soft);font-weight:700">📦 Pre venta · ${esc(c.cliente)} · ${c.entregada ? '✓ entregada' : 'por entregar'}</span>` : ''}
           ${c.filas.length > 1 ? `<span style="color:var(--brand);font-weight:700">🛍 Compra · ${plural(c.unidades, 'prenda')}</span>` : ''}
           <b>${prendasTxt.map(esc).join('<br>')}</b>
           <span>${[c.vendedor && '👤 ' + c.vendedor, c.nota && '“' + c.nota + '”', c.anulada && 'ANULADA'].filter(Boolean).map(esc).join(' · ')}</span>
@@ -479,8 +495,8 @@ function resumenDatos() {
     x.efectivo += Number(v.efectivo); x.transferencia += Number(v.transferencia);
     // Detalle: misma prenda y talle con la misma forma de pago se agrupan
     const p = porId[v.prenda_id] || {};
-    const ik = [v.prenda_id, v.forma_pago, v.forma_pago === 'regalo' ? v.nota || '' : ''].join('|');
-    const it = x.items[ik] ||= { nombre: `${p.modelo || '¿?'}${p.color ? ' ' + p.color : ''} · ${p.talle || ''}`, forma: v.forma_pago, nota: v.forma_pago === 'regalo' ? v.nota : '', cant: 0, total: 0 };
+    const ik = [v.prenda_id, v.forma_pago, v.forma_pago === 'regalo' ? v.nota || '' : '', v.preventa ? 'pv:' + (v.cliente || '') : ''].join('|');
+    const it = x.items[ik] ||= { nombre: `${p.modelo || '¿?'}${p.color ? ' ' + p.color : ''} · ${p.talle || ''}`, forma: v.forma_pago, nota: v.forma_pago === 'regalo' ? v.nota : v.preventa ? '📦 pre venta ' + (v.cliente || '') : '', cant: 0, total: 0 };
     it.cant += v.cantidad; it.total += Number(v.total);
   }
   const porCat = {};
@@ -490,7 +506,11 @@ function resumenDatos() {
   }
   const cargadoU = activas.reduce((s, p) => s + p.cargado, 0);
   const cargadoValor = activas.reduce((s, p) => s + p.cargado * Number(p.precio), 0);
-  return { st, ef, tr, rgU, rgValor, vendidasU, quedaU, quedaValor, cargadoU, cargadoValor, porVend, porCat };
+  const pv = act.filter(v => v.preventa);
+  const pvU = pv.reduce((s, v) => s + v.cantidad, 0);
+  const pvPend = pv.filter(v => !v.entregada).reduce((s, v) => s + v.cantidad, 0);
+  const pvCobrado = pv.reduce((s, v) => s + Number(v.total), 0);
+  return { st, ef, tr, rgU, rgValor, vendidasU, quedaU, quedaValor, cargadoU, cargadoValor, porVend, porCat, pvU, pvPend, pvCobrado };
 }
 
 function renderResumen() {
@@ -511,6 +531,7 @@ function renderResumen() {
       <div class="card kpi"><span>Prendas vendidas</span><b>${r.vendidasU}</b></div>
       <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span class="money">${money(r.quedaValor)}</span></div>
       <button class="card kpi kpi-btn" id="kpiRegalos" title="${esc(destinatariosPrevios().join(', ') || 'Sin regalos todavía')}"><span>Regaladas · ver a quién ›</span><b style="color:var(--gift)">${r.rgU}</b><span class="money">${money(r.rgValor)}</span></button>
+      <button class="card kpi kpi-btn" id="kpiPreventa"><span>📦 Pre ventas · ver ›</span><b style="color:var(--mauve-soft)">${r.pvU}</b><span>${r.pvPend ? r.pvPend + ' por entregar' : 'todas entregadas'} · <span class="money">${money(r.pvCobrado)}</span></span></button>
     </div>
     <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
 
@@ -543,6 +564,7 @@ function renderResumen() {
   $('#excel').onclick = descargarExcel;
   $('#volver').onclick = () => { tab = 'stock'; render(); window.scrollTo(0, 0); };
   $('#kpiRegalos').onclick = verRegalos;
+  $('#kpiPreventa').onclick = () => { filtros.forma = 'preventa'; filtros.vendedor = 'todos'; tab = 'ventas'; render(); window.scrollTo(0, 0); };
 }
 
 // ---------- Venta ----------
@@ -569,10 +591,10 @@ function pintarCarrito() {
 
 // Botones de pago compartidos (venta de una prenda y cobro de la compra).
 // Efectivo / Transf. registran al tocar; Mixto pide cuánto en cada uno; Regalo pide a quién.
-function pagoHTML() {
+function pagoHTML(op = {}) {
   return `
-    <div class="pay-btns big">
-      ${Object.entries(FORMAS).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.corto}</button>`).join('')}
+    <div class="pay-btns big ${op.preventa ? 'tres' : ''}">
+      ${Object.entries(FORMAS).filter(([k]) => !(op.preventa && k === 'regalo')).map(([k, f]) => `<button class="pay p-${k}" data-pay="${k}">${f.icon}${f.corto}</button>`).join('')}
     </div>
     <div id="mixtoBox" class="hidden pago-extra">
       <div class="step-lbl" style="color:var(--brand)">Pago mixto · total <span class="money" id="mxTotal"></span></div>
@@ -590,10 +612,11 @@ function pagoHTML() {
       <button class="btn" id="okRegalo" style="width:100%;margin-top:10px;background:var(--mauve);color:#fff">Registrar regalo</button>
     </div>`;
 }
-function bindPago(obtener) {
+// op.preventa: precio de pre venta, pide a nombre de quién (op.cliente) y no toca la compra en curso
+function bindPago(obtener, op = {}) {
   let guardando = false;
   const habilitar = () => {
-    const vacio = !obtener().length;
+    const vacio = !obtener().length || (op.preventa && !op.cliente());
     document.querySelectorAll('[data-pay]').forEach(b => b.disabled = guardando || vacio);
     $('#okRegalo').disabled = guardando || vacio;
     actualizarMixto();
@@ -618,15 +641,17 @@ function bindPago(obtener) {
     const { data, error } = await sb.rpc('vender_compra', {
       p_items: items.map(i => ({ prenda: i.prenda_id, cantidad: i.cant })),
       p_forma: forma, p_efectivo: efectivo || 0, p_vendedor: vendedor, p_nota: nota || null,
+      p_preventa: !!op.preventa, p_cliente: op.preventa ? op.cliente() : null,
     });
     if (error) {
       guardando = false; btn.innerHTML = txt; habilitar();
       toast(error.message.replace(/^.*?: /, '')); return;
     }
-    carrito = []; guardarCarrito();
+    if (!op.preventa) { carrito = []; guardarCarrito(); }
     cerrarModal();
     const total = totalItems(items);
-    const detalle = contar(items) === 1 ? `${items[0].p.modelo} ${items[0].p.talle}` : plural(contar(items), 'prenda');
+    const detalle = (op.preventa ? `📦 Pre venta ${op.cliente()} · ` : '') +
+      (contar(items) === 1 ? `${items[0].p.modelo} ${items[0].p.talle}` : plural(contar(items), 'prenda'));
     toast(forma === 'regalo' ? `🎁 ${detalle}${nota ? ' → ' + nota : ''}`
       : forma === 'mixto' ? `✓ ${detalle} · ${money(efectivo)} efectivo + ${money(total - efectivo)} transf.`
       : `✓ ${detalle} · ${money(total)} ${FORMAS[forma].txt.toLowerCase()}`, 'Deshacer', () => anularCompra(data, true));
@@ -654,24 +679,28 @@ function bindPago(obtener) {
 }
 
 // VENDER → talle → forma de pago (o "Agregar otra prenda" para armar una compra)
-function abrirVenta(key, preId) {
+function abrirVenta(key, preId, preventa = false) {
   const items = conStock().filter(p => grupoKey(p) === key && p.activo)
     .map(i => ({ ...i, disp: i.queda - enCarrito(i.id) }))
     .sort((a, b) => ordenTalle(a.talle, b.talle));
   if (!items.some(i => i.disp > 0)) { if (items.some(i => i.queda > 0)) toast('Ya está todo en la compra en curso'); return; }
-  if (!vendedor) { pedirVendedor(() => abrirVenta(key, preId)); return; }
+  if (!vendedor) { pedirVendedor(() => abrirVenta(key, preId, preventa)); return; }
   const base = items[0];
   const conStk = items.filter(i => i.disp > 0);
   let sel = items.find(i => i.id === preId && i.disp > 0) || (conStk.length === 1 ? conStk[0] : null);
   let cant = 1;
-  const previo = itemsCarrito();
+  const previo = preventa ? [] : itemsCarrito();
   const foto = items.find(i => i.foto_url)?.foto_url;
+  const precioTxt = preventa
+    ? `<s class="muted">${money(base.precio)}</s> <b class="money" style="color:var(--brand)">${money(base.precio_preventa)}</b>`
+    : `<b class="money" style="color:var(--ink)">${money(base.precio)}</b>`;
   modal(`
     <div class="sell-top">
       <div class="thumb">${foto ? `<img src="${esc(foto)}" alt="">` : iconCam()}</div>
       <div>
+        ${preventa ? '<div class="badge p-preventa" style="display:inline-block;margin-bottom:4px">📦 Pre venta</div>' : ''}
         <h2 class="display">${esc(base.modelo)}</h2>
-        <div class="muted small">${esc(base.categoria)}${base.color ? ' · ' + esc(base.color) : ''} · <b class="money" style="color:var(--ink)">${money(base.precio)}</b></div>
+        <div class="muted small">${esc(base.categoria)}${base.color ? ' · ' + esc(base.color) : ''} · ${precioTxt}</div>
       </div>
     </div>
     ${previo.length ? `<div class="en-curso">🛍 <b>Compra en curso:</b> ${plural(contar(previo), 'prenda')} · ${money(totalItems(previo))}. Esta se suma a la misma compra.</div>` : ''}
@@ -679,16 +708,21 @@ function abrirVenta(key, preId) {
     <div class="talles-big">
       ${items.map(i => `<button class="tb" data-t="${i.id}" ${i.disp <= 0 ? 'disabled' : ''}><b>${esc(i.talle)}</b><span>${i.disp <= 0 ? 'agotado' : 'quedan ' + i.disp}</span></button>`).join('')}
     </div>
+    ${preventa ? `
+      <div class="step-lbl">2 · ¿A nombre de quién?</div>
+      <input class="input" id="cliente" maxlength="60" placeholder="Nombre y apellido (para entregársela)">` : ''}
     <div class="step-lbl row" style="justify-content:space-between">
-      <span>2 · Cómo paga <span class="money" id="tot" style="color:var(--ink)"></span></span>
+      <span>${preventa ? 3 : 2} · Cómo paga <span class="money" id="tot" style="color:var(--ink)"></span></span>
       <div class="stepper mini"><button id="menos" aria-label="Menos">−</button><input id="cant" inputmode="numeric" value="1" aria-label="Cantidad"><button id="mas" aria-label="Más">+</button></div>
     </div>
-    ${pagoHTML()}
-    <button class="btn agregar" id="agregar">＋ Agregar otra prenda a esta compra</button>
+    ${pagoHTML({ preventa })}
+    <button class="btn agregar ${preventa ? 'hidden' : ''}" id="agregar">＋ Agregar otra prenda a esta compra</button>
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cancelar</button>
   `);
-  const actuales = () => sel ? [...previo, { prenda_id: sel.id, cant, p: sel }] : [];
-  const pago = bindPago(actuales);
+  const conPrecio = p => preventa ? { ...p, precio: p.precio_preventa } : p;
+  const actuales = () => sel ? [...previo, { prenda_id: sel.id, cant, p: conPrecio(sel) }] : [];
+  const pago = bindPago(actuales, preventa ? { preventa: true, cliente: () => $('#cliente').value.trim() } : {});
+  if (preventa) $('#cliente').oninput = () => pago.actualizar();
   const upd = () => {
     cant = Math.max(1, Math.min(sel ? sel.disp : 1, parseInt($('#cant').value) || 1));
     $('#cant').value = cant;
@@ -784,6 +818,9 @@ function agruparCompras(lista) {
     c.efectivo = c.filas.reduce((s, v) => s + Number(v.efectivo), 0);
     c.transferencia = c.filas.reduce((s, v) => s + Number(v.transferencia), 0);
     c.anulada = c.filas.every(v => v.anulada);
+    c.preventa = c.filas.some(v => v.preventa);
+    c.cliente = c.filas.find(v => v.cliente)?.cliente || '';
+    c.entregada = c.filas.every(v => v.entregada);
   }
   return [...m.values()];
 }
@@ -817,6 +854,7 @@ function abrirDetalleCompra(key) {
         <span class="money">${c.forma === 'regalo' ? '—' : money(v.total)}</span></div>`; }).join('')}
     </div>
     <div class="card" style="padding:12px;margin-top:10px;box-shadow:none;border:1.5px solid var(--line)">
+      ${c.preventa ? fila('📦 Pre venta a nombre de', `<b>${esc(c.cliente)}</b>`) + fila('Entrega', `<span class="badge ${c.entregada ? 'p-entregada' : 'p-preventa'}">${c.entregada ? '✓ Entregada' : 'Por entregar'}</span>`) : ''}
       ${fila('Pago', `<span class="badge p-${c.forma}">${FORMAS[c.forma].txt}</span>`)}
       ${c.forma === 'mixto' ? fila('Efectivo', `<b class="money" style="color:var(--ok)">${money(c.efectivo)}</b>`) + fila('Transferencia', `<b class="money" style="color:var(--transf)">${money(c.transferencia)}</b>`) : ''}
       ${fila('Total', `<b class="money">${money(c.total)}</b>`)}
@@ -824,11 +862,18 @@ function abrirDetalleCompra(key) {
       ${fila('Cuándo', `<span>${d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>`)}
       ${c.nota ? `<div style="margin-top:8px">${c.forma === 'regalo' ? '🎁 ' : ''}“${esc(c.nota)}”</div>` : ''}
     </div>
+    ${c.preventa && !c.anulada ? `<button class="btn" id="entregar" style="width:100%;margin-top:14px;${c.entregada ? '' : 'background:var(--ok);color:#0b1a08'}">${c.entregada ? 'Desmarcar entrega' : '✓ Marcar como entregada'}</button>` : ''}
     ${c.anulada
       ? `<button class="btn" id="anul" style="width:100%;margin-top:14px">Restaurar ${c.unidades === 1 ? 'venta' : 'compra'}</button>`
       : `<button class="btn danger" id="anul" style="width:100%;margin-top:14px">Anular ${c.unidades === 1 ? 'venta' : 'compra completa'} (vuelve al stock)</button>`}
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
   `);
+  if ($('#entregar')) $('#entregar').onclick = async () => {
+    const q = sb.from('ventas').update({ entregada: !c.entregada });
+    const { error } = await (String(c.key).startsWith('v') ? q.eq('id', Number(c.key.slice(1))) : q.eq('compra_id', c.key));
+    if (error) { toast('No se pudo: ' + error.message); return; }
+    cerrarModal(); toast(c.entregada ? 'Pre venta marcada como pendiente' : `✓ Entregada a ${c.cliente}`); cargar();
+  };
   $('#anul').onclick = () => {
     if (!c.anulada && !confirm(`¿Anular ${c.unidades === 1 ? 'esta venta' : 'toda esta compra'}? Las prendas vuelven al stock.`)) return;
     cerrarModal(); anularCompra(c.key, !c.anulada);
@@ -857,6 +902,9 @@ function abrirPrenda(key) {
     <div class="row" style="gap:10px">
       <div style="flex:1"><label class="lbl">Color</label><input class="input" id="fColor" value="${esc(base.color)}" placeholder="Ej: Negro" maxlength="40"></div>
       <div style="flex:1"><label class="lbl">Precio ($)</label><input class="input" id="fPrecio" type="number" inputmode="numeric" min="0" step="1" value="${base.precio === '' ? '' : Number(base.precio)}" placeholder="0"></div>
+    </div>
+    <div class="row" style="gap:10px">
+      <div style="flex:1"><label class="lbl">Precio pre venta ($) · opcional</label><input class="input" id="fPrecioPv" type="number" inputmode="numeric" min="0" step="1" value="${base.precio_preventa == null ? '' : Number(base.precio_preventa)}" placeholder="Sin pre venta"></div>
     </div>
     <label class="lbl">Foto</label>
     <div class="photo-pick">
@@ -916,6 +964,7 @@ function abrirPrenda(key) {
     let categoria = $('#fCat').value === '__otra' ? $('#fCatOtra').value.trim() : $('#fCat').value;
     const modelo = $('#fModelo').value.trim(), color = $('#fColor').value.trim();
     const precio = Number($('#fPrecio').value);
+    const precioPv = $('#fPrecioPv').value === '' ? null : Number($('#fPrecioPv').value);
     if (!categoria) return err('Poné la categoría');
     if (!modelo) return err('Poné el modelo o diseño');
     if (!(precio >= 0) || $('#fPrecio').value === '') return err('Poné el precio');
@@ -928,7 +977,7 @@ function abrirPrenda(key) {
     const btn = $('#fGuardar'); btn.disabled = true; btn.textContent = 'Guardando…';
     try {
       if (fotoArchivo) foto = await subirFoto(fotoArchivo);
-      const comun = { categoria, modelo, color, precio, foto_url: foto, activo: true };
+      const comun = { categoria, modelo, color, precio, precio_preventa: precioPv, foto_url: foto, activo: true };
       const quitar = items.filter(i => !filas.some(f => f.id === i.id)).map(i => i.id);
       const ops = [];
       if (quitar.length) ops.push(sb.from('prendas').delete().in('id', quitar));
@@ -1010,7 +1059,7 @@ async function descargarExcel() {
       Fecha: new Date(v.creado).toLocaleString('es-AR'), Categoría: p.categoria, Modelo: p.modelo, Color: p.color, Talle: p.talle,
       Compra: compraKey(v).slice(0, 8), Cantidad: v.cantidad, Pago: FORMAS[v.forma_pago].txt, 'Precio unit.': Number(v.precio_unit), Total: Number(v.total),
       Efectivo: Number(v.efectivo), Transferencia: Number(v.transferencia),
-      Vendió: v.vendedor, Nota: v.nota || '', Anulada: v.anulada ? 'Sí' : '',
+      Vendió: v.vendedor, Nota: v.nota || '', 'Pre venta': v.preventa ? 'Sí' : '', Cliente: v.cliente || '', Entregada: v.preventa ? (v.entregada ? 'Sí' : 'No') : '', Anulada: v.anulada ? 'Sí' : '',
     };
   })), 'Ventas');
   XLSX.writeFile(wb, `merch-festivalazo-${new Date().toISOString().slice(0, 10)}.xlsx`);
