@@ -343,8 +343,6 @@ function grupos(lista) {
   }
   return [...m.values()];
 }
-const pendientesPreventa = g => ventas.filter(v => v.preventa && !v.entregada && !v.anulada && g.items.some(i => i.id === v.prenda_id))
-  .reduce((s, v) => s + v.cantidad, 0);
 const categoriasUsadas = () => [...new Set([...CATEGORIAS, ...prendas.map(p => p.categoria)])];
 
 // ---------- Render ----------
@@ -403,7 +401,6 @@ function renderStock() {
             ${g.items.map(i => `<button class="size ${i.queda <= 0 ? 'zero' : i.queda <= 2 ? 'low' : ''}" data-sell="${i.id}" data-key="${esc(g.key)}" ${i.queda <= 0 ? 'disabled' : ''}>
               <b>${esc(i.talle)}</b><span>${i.queda}/${i.cargado}</span></button>`).join('')}
           </div>
-          ${pendientesPreventa(g) ? `<div class="pv-pend">📦 ${plural(pendientesPreventa(g), 'pre venta')} por entregar</div>` : ''}
           <div class="${g.items.some(i => i.precio_preventa != null) ? 'vender-row' : ''}">
             <button class="vender" data-vender="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>${g.queda <= 0 ? 'Agotada' : 'Vender'}</button>
             ${g.items.some(i => i.precio_preventa != null) ? `<button class="vender preventa" data-preventa="${esc(g.key)}" ${g.queda <= 0 ? 'disabled' : ''}>Pre venta</button>` : ''}
@@ -430,14 +427,13 @@ function renderVentas() {
   const porId = Object.fromEntries(prendas.map(p => [p.id, p]));
   const vendedores = [...new Set(ventas.map(v => v.vendedor).filter(Boolean))].sort();
   const todas = agruparCompras(ventas);
-  const pvPend = todas.filter(c => c.preventa && !c.entregada && !c.anulada).length;
   const lista = todas.filter(c =>
     (filtros.forma === 'todas' || (filtros.forma === 'preventa' ? c.preventa : c.forma === filtros.forma)) &&
     (filtros.vendedor === 'todos' || c.vendedor === filtros.vendedor));
 
   let html = `
     <div class="chips">
-      ${[['todas', 'Todas'], ['preventa', `📦 Pre ventas${pvPend ? ' (' + pvPend + ' por entregar)' : ''}`], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['mixto', 'Mixto'], ['regalo', 'Regalos']].map(([k, t]) =>
+      ${[['todas', 'Todas'], ['preventa', '📦 Pre ventas'], ['efectivo', 'Efectivo'], ['transferencia', 'Transferencia'], ['mixto', 'Mixto'], ['regalo', 'Regalos']].map(([k, t]) =>
         `<button class="chip ${filtros.forma === k ? 'on' : ''}" data-forma="${k}">${t}</button>`).join('')}
     </div>
     ${vendedores.length > 1 ? `<div class="chips">${['todos', ...vendedores].map(n =>
@@ -455,7 +451,7 @@ function renderVentas() {
       <div class="sale ${c.anulada ? 'anulada' : ''}" data-compra="${esc(c.key)}">
         <div class="when">${d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })}</div>
         <div class="what">
-          ${c.preventa ? `<span style="color:var(--mauve-soft);font-weight:700">📦 Pre venta · ${esc(c.cliente)} · ${c.entregada ? '✓ entregada' : 'por entregar'}</span>` : ''}
+          ${c.preventa ? `<span style="color:var(--mauve-soft);font-weight:700">📦 Pre venta · ${esc(c.cliente)} · ✓ entregada</span>` : ''}
           ${c.filas.length > 1 ? `<span style="color:var(--brand);font-weight:700">🛍 Compra · ${plural(c.unidades, 'prenda')}</span>` : ''}
           <b>${prendasTxt.map(esc).join('<br>')}</b>
           <span>${[c.vendedor && '👤 ' + c.vendedor, c.nota && '“' + c.nota + '”', c.anulada && 'ANULADA'].filter(Boolean).map(esc).join(' · ')}</span>
@@ -531,7 +527,7 @@ function renderResumen() {
       <div class="card kpi"><span>Prendas vendidas</span><b>${r.vendidasU}</b></div>
       <div class="card kpi"><span>Quedan</span><b>${r.quedaU}</b><span class="money">${money(r.quedaValor)}</span></div>
       <button class="card kpi kpi-btn" id="kpiRegalos" title="${esc(destinatariosPrevios().join(', ') || 'Sin regalos todavía')}"><span>Regaladas · ver a quién ›</span><b style="color:var(--gift)">${r.rgU}</b><span class="money">${money(r.rgValor)}</span></button>
-      <button class="card kpi kpi-btn" id="kpiPreventa"><span>📦 Pre ventas · ver ›</span><b style="color:var(--mauve-soft)">${r.pvU}</b><span>${r.pvPend ? r.pvPend + ' por entregar' : 'todas entregadas'} · <span class="money">${money(r.pvCobrado)}</span></span></button>
+      <button class="card kpi kpi-btn" id="kpiPreventa"><span>📦 Pre ventas · ver ›</span><b style="color:var(--mauve-soft)">${r.pvU}</b><span>entregadas · <span class="money">${money(r.pvCobrado)}</span></span></button>
     </div>
     <button class="btn sec" id="excel" style="width:100%">⬇ Descargar Excel</button>
 
@@ -648,6 +644,8 @@ function bindPago(obtener, op = {}) {
       toast(error.message.replace(/^.*?: /, '')); return;
     }
     if (!op.preventa) { carrito = []; guardarCarrito(); }
+    // La pre venta se registra cuando se entrega una remera ya pagada: queda entregada en el acto
+    else await sb.from('ventas').update({ entregada: true }).eq('compra_id', data);
     cerrarModal();
     const total = totalItems(items);
     const detalle = (op.preventa ? `📦 Pre venta ${op.cliente()} · ` : '') +
@@ -709,10 +707,10 @@ function abrirVenta(key, preId, preventa = false) {
       ${items.map(i => `<button class="tb" data-t="${i.id}" ${i.disp <= 0 ? 'disabled' : ''}><b>${esc(i.talle)}</b><span>${i.disp <= 0 ? 'agotado' : 'quedan ' + i.disp}</span></button>`).join('')}
     </div>
     ${preventa ? `
-      <div class="step-lbl">2 · ¿A nombre de quién?</div>
-      <input class="input" id="cliente" maxlength="60" placeholder="Nombre y apellido (para entregársela)">` : ''}
+      <div class="step-lbl">2 · ¿A quién se la entregás?</div>
+      <input class="input" id="cliente" maxlength="60" placeholder="Nombre y apellido de quien la retira">` : ''}
     <div class="step-lbl row" style="justify-content:space-between">
-      <span>${preventa ? 3 : 2} · Cómo paga <span class="money" id="tot" style="color:var(--ink)"></span></span>
+      <span>${preventa ? '3 · Cómo la pagó' : '2 · Cómo paga'} <span class="money" id="tot" style="color:var(--ink)"></span></span>
       <div class="stepper mini"><button id="menos" aria-label="Menos">−</button><input id="cant" inputmode="numeric" value="1" aria-label="Cantidad"><button id="mas" aria-label="Más">+</button></div>
     </div>
     ${pagoHTML({ preventa })}
@@ -862,18 +860,11 @@ function abrirDetalleCompra(key) {
       ${fila('Cuándo', `<span>${d.toLocaleString('es-AR', { dateStyle: 'short', timeStyle: 'short' })}</span>`)}
       ${c.nota ? `<div style="margin-top:8px">${c.forma === 'regalo' ? '🎁 ' : ''}“${esc(c.nota)}”</div>` : ''}
     </div>
-    ${c.preventa && !c.anulada ? `<button class="btn" id="entregar" style="width:100%;margin-top:14px;${c.entregada ? '' : 'background:var(--ok);color:#0b1a08'}">${c.entregada ? 'Desmarcar entrega' : '✓ Marcar como entregada'}</button>` : ''}
     ${c.anulada
       ? `<button class="btn" id="anul" style="width:100%;margin-top:14px">Restaurar ${c.unidades === 1 ? 'venta' : 'compra'}</button>`
       : `<button class="btn danger" id="anul" style="width:100%;margin-top:14px">Anular ${c.unidades === 1 ? 'venta' : 'compra completa'} (vuelve al stock)</button>`}
     <button class="btn sec" style="width:100%;margin-top:8px" data-close>Cerrar</button>
   `);
-  if ($('#entregar')) $('#entregar').onclick = async () => {
-    const q = sb.from('ventas').update({ entregada: !c.entregada });
-    const { error } = await (String(c.key).startsWith('v') ? q.eq('id', Number(c.key.slice(1))) : q.eq('compra_id', c.key));
-    if (error) { toast('No se pudo: ' + error.message); return; }
-    cerrarModal(); toast(c.entregada ? 'Pre venta marcada como pendiente' : `✓ Entregada a ${c.cliente}`); cargar();
-  };
   $('#anul').onclick = () => {
     if (!c.anulada && !confirm(`¿Anular ${c.unidades === 1 ? 'esta venta' : 'toda esta compra'}? Las prendas vuelven al stock.`)) return;
     cerrarModal(); anularCompra(c.key, !c.anulada);
